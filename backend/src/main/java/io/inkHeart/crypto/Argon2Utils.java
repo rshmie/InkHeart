@@ -4,7 +4,7 @@ import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 
 /**
- * Argon2id is used for secure password hashing and login
+ * Argon2id is used for secure password hashing and login using argon2
  */
 public class Argon2Utils {
     private static final int ITERATIONS = 3;

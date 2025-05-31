@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
 /**
- * AES-GCM is used for encryption and decryption
+ * AES-GCM is used for encryption and decryption with key derived from BouncyCastle’s Argon2BytesGenerator
  */
 public class EncryptionUtil {
     private static final int KEY_SIZE = 256;
