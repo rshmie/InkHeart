@@ -7,7 +7,9 @@ import io.inkHeart.dto.UpdatePasswordRequest;
 import io.inkHeart.entity.User;
 import io.inkHeart.security.JwtUtil;
 import io.inkHeart.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -57,14 +59,23 @@ public class UserController {
 
     @PutMapping("/update-password")
     public ResponseEntity<String> updatePassword(@RequestBody UpdatePasswordRequest passwordRequest) {
-        userService.updatePassword(passwordRequest.getEmail(), passwordRequest.getNewPassword(), passwordRequest.getOldPassword());
+        String authenticatedEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        userService.updatePassword(authenticatedEmail, passwordRequest.getNewPassword(), passwordRequest.getOldPassword());
         return ResponseEntity.ok("Password updated successfully");
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
-        userService.deleteUserById(id);
-        return ResponseEntity.ok("User deleted successfully");
+         String authenticatedUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+         User authenticatedUser = userService.findByEmail(authenticatedUserEmail);
+         if (authenticatedUser == null) {
+             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authenticated user not found.");
+         }
+         if (authenticatedUser.getId().equals(id)) {  /* or user has admin role */
+             userService.deleteUserById(id);
+             return ResponseEntity.ok("User deleted successfully");
+         } else {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not authorized"); }
     }
 
     // Implement delete user account

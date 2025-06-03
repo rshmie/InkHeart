@@ -26,6 +26,7 @@ public class UserService {
     }
 
     public User login(String email, String password) {
+        // what about error code?
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Invalid user credentials"));
         if (!Argon2Utils.verifyPassword(user.getPasswordHash(), password)) {

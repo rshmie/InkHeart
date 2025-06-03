@@ -1,10 +1,7 @@
 package io.inkHeart.contollers;
 
-import io.inkHeart.crypto.Argon2Utils;
 import io.inkHeart.dto.AuthRequest;
 import io.inkHeart.dto.LoginResponse;
-import io.inkHeart.dto.UpdatePasswordRequest;
-import io.inkHeart.entity.User;
 import io.inkHeart.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
