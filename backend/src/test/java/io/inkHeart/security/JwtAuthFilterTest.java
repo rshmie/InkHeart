@@ -1,10 +1,12 @@
 package io.inkHeart.security;
 
+import io.inkHeart.entity.CustomUserDetails;
 import io.inkHeart.entity.User;
 import io.inkHeart.repository.UserRepository;
 import io.inkHeart.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import org.checkerframework.checker.units.qual.C;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+
 import java.io.IOException;
 import java.util.Optional;
 
@@ -27,7 +32,7 @@ import static org.mockito.Mockito.mock;
 class JwtAuthFilterTest {
     private JwtAuthFilter jwtAuthFilter;
     @Mock
-    private UserService userService;
+    private UserDetailsService userService;
     private JwtUtil jwtUtil;
     private String validToken;
     private final String email = "test@example.com";
@@ -46,7 +51,8 @@ class JwtAuthFilterTest {
         User mockUser = new User();
         mockUser.setEmail(email);
         mockUser.setId(1L);
-        Mockito.when(userService.findByEmail(email)).thenReturn(mockUser);
+        CustomUserDetails customUserDetails = new CustomUserDetails(mockUser);
+        Mockito.when(userService.loadUserByUsername(email)).thenReturn(customUserDetails);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + validToken);

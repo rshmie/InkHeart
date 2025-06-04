@@ -30,14 +30,14 @@ class UserControllerTest {
     void testRegisterAndLogin() throws Exception {
 
         AuthRequest request = new AuthRequest(EMAIL, TEST_PASSWORD);
-        mockMvc.perform(post("/user/register")
+        mockMvc.perform(post("/api/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
 
         // Login with the registered user
         AuthRequest login = new AuthRequest(EMAIL, TEST_PASSWORD);
-        var result = mockMvc.perform(post("/user/login")
+        var result = mockMvc.perform(post("/api/user/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())

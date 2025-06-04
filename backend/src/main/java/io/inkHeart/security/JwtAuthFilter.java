@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,29 +19,25 @@ import java.util.Collections;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
-    private final UserService userService;
-    public JwtAuthFilter(JwtUtil jwtUtil, UserService userService) {
+    private final UserDetailsService userDetailsService;
+    public JwtAuthFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
-        this.userService = userService;
+        this.userDetailsService = userDetailsService;
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        System.out.println("JwtAuthFilter: checking " + request.getRequestURI());
         final String authHeader = request.getHeader("Authorization");
         System.out.println("auth header: " + authHeader);
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtUtil.validateToken(token)) {
                 String email = jwtUtil.extractUserName(token);
-                if (userService.findByEmail(email) == null) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"User not found or token invalid\"}");
-                    return;
-                }
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
                 System.out.println("Authenticated JWT for: " + email); // will be removed later
                 var auth = new UsernamePasswordAuthenticationToken(
-                        email, null, Collections.emptyList());
+                        userDetails, null, userDetails.getAuthorities());
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } else {

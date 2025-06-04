@@ -4,11 +4,13 @@ import io.inkHeart.dto.AuthRequest;
 import io.inkHeart.dto.LoginResponse;
 import io.inkHeart.dto.RegisterResponse;
 import io.inkHeart.dto.UpdatePasswordRequest;
+import io.inkHeart.entity.CustomUserDetails;
 import io.inkHeart.entity.User;
 import io.inkHeart.security.JwtUtil;
 import io.inkHeart.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +31,7 @@ Spring Security allows access if valid
 Your controller logic executes securely
  */
 @RestController()
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 @Validated
 public class UserController {
     private final UserService userService;
@@ -58,15 +60,16 @@ public class UserController {
     }
 
     @PutMapping("/update-password")
-    public ResponseEntity<String> updatePassword(@RequestBody UpdatePasswordRequest passwordRequest) {
-        String authenticatedEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+    public ResponseEntity<String> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                                 @RequestBody UpdatePasswordRequest passwordRequest) {
+        var authenticatedEmail = userDetails.getUsername();
         userService.updatePassword(authenticatedEmail, passwordRequest.getNewPassword(), passwordRequest.getOldPassword());
         return ResponseEntity.ok("Password updated successfully");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
-         String authenticatedUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+    public ResponseEntity<String> deleteUserById(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long id) {
+         String authenticatedUserEmail = userDetails.getUsername();
          User authenticatedUser = userService.findByEmail(authenticatedUserEmail);
          if (authenticatedUser == null) {
              return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authenticated user not found.");
