@@ -1,0 +1,66 @@
+package io.inkHeart.cli.commad;
+
+import io.inkHeart.cli.auth.RegisterService;
+import io.inkHeart.cli.utility.MessagePrinter;
+import picocli.CommandLine;
+
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.concurrent.Callable;
+
+@CommandLine.Command(name = "register", description = "Create a new InkHeart account.")
+public class RegisterCommand implements Callable<Integer> {
+
+    @CommandLine.Option(names = {"-e", "--email"}, description = "Your email address")
+    private String email;
+
+    @Override
+    public Integer call() {
+        Scanner scanner = new Scanner(System.in);
+
+        if (email == null) {
+            MessagePrinter.prompt("Enter your email address:");
+            email = scanner.nextLine().trim();
+        }
+
+        MessagePrinter.prompt("Choose a strong password:");
+        char[] passwordChars = readPasswordSafe(scanner);
+        if (passwordChars == null) return 1;
+
+        MessagePrinter.prompt("Confirm password:");
+        char[] confirmPasswordChars = readPasswordSafe(scanner);
+        if (!java.util.Arrays.equals(passwordChars, confirmPasswordChars)) {
+            MessagePrinter.error("Passwords do not match. Please try again.");
+            return 1;
+        }
+
+        MessagePrinter.info("Registering account for " + email + "...");
+
+        try {
+            var response = new RegisterService().handleSignUp(email, new String(passwordChars));
+            if (response.statusCode() == 201) {
+                MessagePrinter.success("Account created successfully! You can now log in.");
+            } else {
+                MessagePrinter.error("Registration failed. Status: " + response.statusCode());
+                return 1;
+            }
+        } catch (IOException | InterruptedException e) {
+            MessagePrinter.error("We encountered an error while creating your account: " + e.getMessage());
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private char[] readPasswordSafe(Scanner scanner) {
+        char[] password = System.console() != null
+                ? System.console().readPassword()
+                : scanner.nextLine().toCharArray();
+        if (password.length == 0) {
+            MessagePrinter.error("Could not read password.");
+            return null;
+        }
+        return password;
+    }
+}
+
