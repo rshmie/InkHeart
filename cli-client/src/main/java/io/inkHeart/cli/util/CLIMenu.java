@@ -26,15 +26,16 @@ public class CLIMenu {
         MessagePrinter.prompt("Enter your choice:");
 
     }
-    public static void showJournalMenu(String userEmail) {
+    public static void showJournalMenu() {
         MessagePrinter.divider();
-        MessagePrinter.title("Journal Dashboard - " + userEmail);
+        MessagePrinter.title("------[Secure Journal Dashboard]------");
 
-        System.out.println("[1] New Entry");
-        System.out.println("[2] View Entries");
-        System.out.println("[3] Search Entries");
-        System.out.println("[4] Delete Entry");
-        System.out.println("[5] Logout");
+        MessagePrinter.prompt("[1] New Entry");
+        MessagePrinter.prompt("[2] View Entries");
+        MessagePrinter.prompt("[3] Search Entries");
+        MessagePrinter.prompt("[4] Delete Entry");
+        MessagePrinter.prompt("[5] Logout");
+        MessagePrinter.prompt("[6] Quit");
         MessagePrinter.divider();
         MessagePrinter.prompt("Choose an option:");
     }

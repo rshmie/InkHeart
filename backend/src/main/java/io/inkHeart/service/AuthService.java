@@ -5,6 +5,7 @@ import com.nimbusds.srp6.SRP6Exception;
 import com.nimbusds.srp6.SRP6ServerSession;
 import io.inkHeart.dto.LoginVerifyRequest;
 import io.inkHeart.entity.User;
+import io.inkHeart.exception.EmailAlreadyExistException;
 import io.inkHeart.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,7 @@ public class AuthService {
 
     public User register(String email, String srpSalt, String passwordVerifier) {
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("Email already in use");
+            throw new EmailAlreadyExistException(email);
         }
         byte[] salt = Base64.getDecoder().decode(srpSalt);
         byte[] verifier = Base64.getDecoder().decode(passwordVerifier);

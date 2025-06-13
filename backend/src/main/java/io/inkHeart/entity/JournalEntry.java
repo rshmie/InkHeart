@@ -1,5 +1,7 @@
 package io.inkHeart.entity;
 
+import io.inkHeart.converter.EncryptedPayloadConverter;
+import io.inkHeart.dto.EncryptedPayload;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -17,20 +19,24 @@ public class JournalEntry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name= "user_id")
     private User user;
 
     @Column(nullable = false)
-    private String encryptedTitle;
+    @Convert(converter = EncryptedPayloadConverter.class)
+    private EncryptedPayload encryptedTitle;
 
     @Lob
     @Column(nullable = false)
-    private String encryptedContent;
+    @Convert(converter = EncryptedPayloadConverter.class)
+    private EncryptedPayload encryptedContent;
 
-    private String encryptedMood;
-    private List<String> encryptedTags;
+    @Convert(converter = EncryptedPayloadConverter.class)
+    private EncryptedPayload encryptedMood;
+    @Convert(converter = EncryptedPayloadConverter.class)
+    @ElementCollection
+    private List<EncryptedPayload> encryptedTags;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime visibleAfter;
@@ -43,19 +49,19 @@ public class JournalEntry {
         return user;
     }
 
-    public String getEncryptedTitle() {
+    public EncryptedPayload getEncryptedTitle() {
         return encryptedTitle;
     }
 
-    public String getEncryptedContent() {
+    public EncryptedPayload getEncryptedContent() {
         return encryptedContent;
     }
 
-    public String getEncryptedMood() {
+    public EncryptedPayload getEncryptedMood() {
         return encryptedMood;
     }
 
-    public List<String> getEncryptedTags() {
+    public List<EncryptedPayload> getEncryptedTags() {
         return encryptedTags;
     }
 
@@ -82,19 +88,19 @@ public class JournalEntry {
         this.user = user;
     }
 
-    public void setEncryptedTitle(String encryptedTitle) {
+    public void setEncryptedTitle(EncryptedPayload encryptedTitle) {
         this.encryptedTitle = encryptedTitle;
     }
 
-    public void setEncryptedContent(String encryptedContent) {
+    public void setEncryptedContent(EncryptedPayload encryptedContent) {
         this.encryptedContent = encryptedContent;
     }
 
-    public void setEncryptedMood(String encryptedMood) {
+    public void setEncryptedMood(EncryptedPayload encryptedMood) {
         this.encryptedMood = encryptedMood;
     }
 
-    public void setEncryptedTags(List<String> encryptedTags) {
+    public void setEncryptedTags(List<EncryptedPayload> encryptedTags) {
         this.encryptedTags = encryptedTags;
     }
 
@@ -118,13 +124,11 @@ public class JournalEntry {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof JournalEntry that)) return false;
-        return Objects.equals(id, that.id) && Objects.equals(user, that.user) && Objects.equals(encryptedTitle, that.encryptedTitle) && Objects.equals(encryptedContent, that.encryptedContent) && Objects.equals(encryptedMood, that.encryptedMood) && Objects.equals(encryptedTags, that.encryptedTags) && Objects.equals(createdAt, that.createdAt) && Objects.equals(updatedAt, that.updatedAt) && Objects.equals(visibleAfter, that.visibleAfter) && Objects.equals(expiresAt, that.expiresAt);
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getUser(), that.getUser()) && Objects.equals(getEncryptedTitle(), that.getEncryptedTitle()) && Objects.equals(getEncryptedContent(), that.getEncryptedContent()) && Objects.equals(getEncryptedMood(), that.getEncryptedMood()) && Objects.equals(getEncryptedTags(), that.getEncryptedTags()) && Objects.equals(getCreatedAt(), that.getCreatedAt()) && Objects.equals(getUpdatedAt(), that.getUpdatedAt()) && Objects.equals(getVisibleAfter(), that.getVisibleAfter()) && Objects.equals(getExpiresAt(), that.getExpiresAt());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, user, encryptedTitle, encryptedContent, encryptedMood, encryptedTags, createdAt, updatedAt, visibleAfter, expiresAt);
+        return Objects.hash(getId(), getUser(), getEncryptedTitle(), getEncryptedContent(), getEncryptedMood(), getEncryptedTags(), getCreatedAt(), getUpdatedAt(), getVisibleAfter(), getExpiresAt());
     }
-
-
 }

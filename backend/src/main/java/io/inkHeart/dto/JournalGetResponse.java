@@ -5,11 +5,14 @@ import jakarta.validation.constraints.FutureOrPresent;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record CreateJournalEntryRequest(
+public record JournalGetResponse (
+        Long id,
         EncryptedPayload encryptedTitle,
         EncryptedPayload encryptedContent,
-        List<EncryptedPayload> encryptedTags,
         EncryptedPayload encryptedMood,
+        List<EncryptedPayload> encryptedTags,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         @FutureOrPresent LocalDateTime visibleAfter,
         LocalDateTime expiresAt
 ) {

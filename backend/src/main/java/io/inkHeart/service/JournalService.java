@@ -1,15 +1,18 @@
 package io.inkHeart.service;
 
 import io.inkHeart.dto.CreateJournalEntryRequest;
-import io.inkHeart.dto.JournalEntryResponse;
+import io.inkHeart.dto.EncryptedPayload;
+import io.inkHeart.dto.JournalGetResponse;
 import io.inkHeart.entity.JournalEntry;
 import io.inkHeart.entity.User;
 import io.inkHeart.repository.JournalEntryRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 public class JournalService {
@@ -18,39 +21,61 @@ public class JournalService {
         this.journalEntryRepository = journalEntryRepository;
     }
 
-    public JournalEntryResponse createEntry(User user, CreateJournalEntryRequest request) {
+    public JournalEntry createEntry(User user, CreateJournalEntryRequest request) {
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setUser(user);
-        journalEntry.setEncryptedTitle(request.encryptedTitle());
-        journalEntry.setEncryptedContent(request.encryptedContent());
-        journalEntry.setEncryptedMood(request.encryptedMood());
-        journalEntry.setEncryptedTags(request.encryptedTags());
+        journalEntry.setEncryptedTitle(new EncryptedPayload(request.encryptedTitle().cipherText(), request.encryptedTitle().iv()));
+        journalEntry.setEncryptedContent(new EncryptedPayload(request.encryptedContent().cipherText(), request.encryptedContent().iv()));
+        journalEntry.setEncryptedMood(checkNull(request.encryptedMood()));
+        journalEntry.setEncryptedTags(getEncryptedTagList(request.encryptedTags()));
         journalEntry.setVisibleAfter(request.visibleAfter());
         journalEntry.setExpiresAt(request.expiresAt());
         journalEntry.setCreatedAt(LocalDateTime.now());
         journalEntry.setUpdatedAt(LocalDateTime.now());
 
         journalEntryRepository.save(journalEntry);
-
-        return mapToResponse(journalEntry);
+        return journalEntry;
     }
 
-    public List<JournalEntryResponse> getJournalEntries(String userName) {
+    private List<EncryptedPayload> getEncryptedTagList(List<EncryptedPayload> tags) {
+        List<EncryptedPayload> tagList = new ArrayList<>();
+        for (EncryptedPayload tag : tags) {
+            tagList.add(checkNull(tag));
+        }
+        return tagList;
+    }
+//    public List<JournalEntryResponse> getVisibleEntries(User user) {
+//        var now = LocalDateTime.now();
+//        return journalEntryRepository.findByUserAndCreatedAtBeforeAndVisibleAfterBefore(user, now, now)
+//                .stream()
+//                .map(this::mapToResponse)
+//                .collect(Collectors.toList());
+//    }
+
+    public List<JournalGetResponse> getAllJournalEntries(String userName) {
         return journalEntryRepository.findAllByUserEmail(userName)
                 .stream().map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
-    public List<JournalEntryResponse> getVisibleEntries(User user) {
-        var now = LocalDateTime.now();
-        return journalEntryRepository.findByUserAndCreatedAtBeforeAndVisibleAfterBefore(user, now, now)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+
+//    public List<JournalEntryResponse> getVisibleEntries(User user) {
+//        var now = LocalDateTime.now();
+//        return journalEntryRepository.findByUserAndCreatedAtBeforeAndVisibleAfterBefore(user, now, now)
+//                .stream()
+//                .map(this::mapToResponse)
+//                .collect(Collectors.toList());
+//    }
+
+    private JournalGetResponse mapToResponse(JournalEntry entry) {
+        return new JournalGetResponse(entry.getId(),
+                new EncryptedPayload(entry.getEncryptedTitle().cipherText(), entry.getEncryptedTitle().iv()),
+                new EncryptedPayload(entry.getEncryptedContent().cipherText(), entry.getEncryptedContent().iv()),
+                new EncryptedPayload(entry.getEncryptedMood().cipherText(), entry.getEncryptedMood().iv()),
+                getEncryptedTagList(entry.getEncryptedTags()), entry.getCreatedAt(), entry.getUpdatedAt(),
+                entry.getVisibleAfter(), entry.getExpiresAt());
     }
 
-    private JournalEntryResponse mapToResponse(JournalEntry entry) {
-        return new JournalEntryResponse(entry.getId(), entry.getEncryptedTitle(),
-                entry.getEncryptedContent(), entry.getEncryptedMood(),
-                entry.getEncryptedTags(), entry.getCreatedAt(), entry.getUpdatedAt());
+    private EncryptedPayload checkNull(EncryptedPayload encryptedPayload) {
+        return encryptedPayload == null ? null : new EncryptedPayload(encryptedPayload.cipherText(), encryptedPayload.iv());
     }
 }

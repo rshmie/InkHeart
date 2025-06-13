@@ -1,13 +1,15 @@
 package io.inkHeart.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
-public record JournalEntryResponse (Long id, @NotBlank String encryptedTitle, @NotBlank(message = "Content cannot be empty") String encryptedContent,
-                                    String encryptedMood, List<String> encryptedTags,
-                                    LocalDateTime createdAt, LocalDateTime updatedAt) {
-}
+public record JournalEntryResponse(
+        Long id,
+        EncryptedPayload encryptedTitle,
+
+        // Optional: other small metadata the user might want to see confirmed.
+        // String encryptedMood,
+        // List<String> encryptedTags,
+
+        LocalDateTime createdAt, // Essential: The client needs the server's official timestamp.
+        LocalDateTime updatedAt  // Essential for the same reason.
+) {}
