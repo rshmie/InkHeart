@@ -1,10 +1,12 @@
 package io.inkHeart.cli.commad;
 
 import io.inkHeart.cli.auth.RegisterService;
-import io.inkHeart.cli.utility.MessagePrinter;
+import io.inkHeart.cli.util.JsonUtil;
+import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
@@ -41,7 +43,14 @@ public class RegisterCommand implements Callable<Integer> {
             if (response.statusCode() == 201) {
                 MessagePrinter.success("Account created successfully! You can now log in.");
             } else {
-                MessagePrinter.error("Registration failed. Status: " + response.statusCode());
+                String errorMessage;
+                try {
+                    Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), Map.class);
+                    errorMessage = errorMap.getOrDefault("error", "Registration failed!");
+                } catch (Exception ex) {
+                    errorMessage = "Registration failed. Status :" + response.statusCode();
+                }
+                MessagePrinter.error(errorMessage);
                 return 1;
             }
         } catch (IOException | InterruptedException e) {

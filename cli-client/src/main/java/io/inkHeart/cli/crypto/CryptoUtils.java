@@ -17,7 +17,7 @@ import static io.inkHeart.cli.crypto.CryptoConstants.*;
 /**
  * AES-GCM is used for encryption and decryption with key derived from BouncyCastle’s Argon2BytesGenerator
  */
-public class EncryptionUtil {
+public class CryptoUtils {
     public static byte[] generateIV() {
         byte[] iv = new byte[IV_SIZE];
         SecureRandom secureRandom = new SecureRandom();
@@ -47,10 +47,9 @@ public class EncryptionUtil {
         return new String(decrypted, StandardCharsets.UTF_8);
     }
 
-    public static SecretKey deriveKeyFromPassword(String password, byte[] salt) throws Exception {
+    public static SecretKey deriveKeyFromPassword(String password) throws Exception {
         Argon2BytesGenerator generator = new Argon2BytesGenerator();
-        Argon2Parameters params = new Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
-                .withSalt(salt)
+        Argon2Parameters params = new Argon2Parameters.Builder(Argon2Parameters.ARGON2_id) // .with salt needed?
                 .withParallelism(ARGON2_PARALLELISM)
                 .withMemoryAsKB(ARGON2_MEMORY)
                 .withIterations(ARGON2_ITERATIONS)
@@ -59,6 +58,18 @@ public class EncryptionUtil {
         byte[] keyBytes = new byte[KEY_SIZE / 8];
         generator.generateBytes(password.toCharArray(), keyBytes);
         return new SecretKeySpec(keyBytes, "AES");
+    }
+
+    public static byte[] base64EncodedToBytes(String input) {
+        return Base64.getDecoder().decode(input);
+    }
+
+    public static byte[] bytesToBase64Encoded(byte[] input) {
+        return Base64.getEncoder().encode(input);
+    }
+
+    public static String stringToBase64Encoded(String input) {
+        return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
     }
 
     public record EncryptionResult(byte[] cipherText, byte[] iv, byte[] aad) {

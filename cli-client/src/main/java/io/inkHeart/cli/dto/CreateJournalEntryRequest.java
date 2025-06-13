@@ -1,0 +1,17 @@
+package io.inkHeart.cli.dto;
+
+import jakarta.validation.constraints.FutureOrPresent;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record CreateJournalEntryRequest(
+        EncryptedPayload encryptedTitle,
+        EncryptedPayload encryptedContent,
+        List<EncryptedPayload> encryptedTags,
+        EncryptedPayload encryptedMood,
+        @FutureOrPresent LocalDateTime visibleAfter,
+        LocalDateTime expiresAt
+) {
+
+}

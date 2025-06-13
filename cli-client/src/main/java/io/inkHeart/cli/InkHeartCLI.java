@@ -2,8 +2,8 @@ package io.inkHeart.cli;
 
 import io.inkHeart.cli.commad.LoginCommand;
 import io.inkHeart.cli.commad.RegisterCommand;
-import io.inkHeart.cli.utility.CLIMenu;
-import io.inkHeart.cli.utility.MessagePrinter;
+import io.inkHeart.cli.util.CLIMenu;
+import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;
 import picocli.CommandLine.Help.Ansi;
 
@@ -21,6 +21,7 @@ public class InkHeartCLI implements Runnable {
         // We will now make it interactive.
         Scanner scanner = new Scanner(System.in);
         while (true) {
+            System.out.println();
             CLIMenu.printWelcomeMenu();
             String choice = scanner.nextLine().trim();
             switch (choice) {
@@ -33,7 +34,7 @@ public class InkHeartCLI implements Runnable {
                     new CommandLine(new LoginCommand()).execute();
                     break;
                 case "3":
-                    System.out.println(Ansi.AUTO.string("\n@|yellow Thank you for using InkHeart. Your thoughts are safe with us.|@"));
+                    MessagePrinter.farewell("\nThank you for using InkHeart - your thoughts remain yours.");
                     return; // Exit the loop and the application
                 default:
                     MessagePrinter.error("Invalid option. Please try again.");

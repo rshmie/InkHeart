@@ -1,8 +1,6 @@
-package io.inkHeart.cli.utility;
+package io.inkHeart.cli.util;
 
 import picocli.CommandLine;
-
-import java.util.Scanner;
 
 public class CLIMenu {
     public static void printWelcomeMenu() {
@@ -27,16 +25,18 @@ public class CLIMenu {
 
     }
     public static void showJournalMenu() {
+        System.out.println();
         MessagePrinter.divider();
-        MessagePrinter.title("------[Secure Journal Dashboard]------");
-
-        MessagePrinter.prompt("[1] New Entry");
-        MessagePrinter.prompt("[2] View Entries");
-        MessagePrinter.prompt("[3] Search Entries");
-        MessagePrinter.prompt("[4] Delete Entry");
-        MessagePrinter.prompt("[5] Logout");
-        MessagePrinter.prompt("[6] Quit");
+        MessagePrinter.title("-------- [ Secure Journal Dashboard ] --------");
+        System.out.println();
+        System.out.println(CommandLine.Help.Ansi.AUTO.string("""
+            @|cyan [1]|@ New Entry
+            @|cyan [2]|@ View Entries
+            @|cyan [3]|@ Search Entries
+            @|cyan [4]|@ Delete Entry
+            @|cyan [5]|@ Logout
+        """));
         MessagePrinter.divider();
-        MessagePrinter.prompt("Choose an option:");
+        MessagePrinter.prompt("Select an action [1-5]: "); // Choose an option from above:
     }
 }

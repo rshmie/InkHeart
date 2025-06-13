@@ -1,9 +1,9 @@
 package io.inkHeart.cli.auth;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.srp6.SRP6CryptoParams;
 import com.nimbusds.srp6.SRP6VerifierGenerator;
 import io.inkHeart.cli.dto.RegisterSrpRequest;
+import io.inkHeart.cli.util.JsonUtil;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,8 +35,7 @@ public class RegisterService {
         registerSrpRequest.setSalt(saltBase64);
         registerSrpRequest.setVerifier(verifierBase64);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        var registerBody = objectMapper.writeValueAsString(registerSrpRequest);
+        var registerBody = JsonUtil.getObjectMapper().writeValueAsString(registerSrpRequest);
 
         HttpRequest registerRequest = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "/register"))

@@ -1,6 +1,5 @@
 package io.inkHeart.cli.auth;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.srp6.SRP6ClientCredentials;
 import com.nimbusds.srp6.SRP6ClientSession;
 import com.nimbusds.srp6.SRP6CryptoParams;
@@ -8,6 +7,7 @@ import com.nimbusds.srp6.SRP6Exception;
 import io.inkHeart.cli.dto.FinalLoginResponse;
 import io.inkHeart.cli.dto.LoginChallengeResponse;
 import io.inkHeart.cli.dto.LoginVerifyRequest;
+import io.inkHeart.cli.util.JsonUtil;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -16,12 +16,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Base64;
-import java.util.Scanner;
 
 import static io.inkHeart.cli.CliApplication.API_URL;
 
 public class LoginService {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     public FinalLoginResponse handleLogin(String email, String password) throws IOException, InterruptedException {
         var loginChallengeResponse = getLoginChallengeResponse(email);
         if (loginChallengeResponse == null) {
@@ -35,9 +33,7 @@ public class LoginService {
         if (finalLoginResponse == null) {
             return new FinalLoginResponse("", "", "Login failed!");
         }
-        var token = finalLoginResponse.jwtToken();
         return finalLoginResponse;
-
     }
 
     /**
@@ -61,7 +57,7 @@ public class LoginService {
         if (challengeResponse.statusCode() != 200) {
             return null;
         }
-        return objectMapper.readValue(challengeResponse.body(), LoginChallengeResponse.class);
+        return JsonUtil.getObjectMapper().readValue(challengeResponse.body(), LoginChallengeResponse.class);
     }
 
     /**
@@ -85,7 +81,7 @@ public class LoginService {
         // Computes the shared secret 'S' and the client's proof 'M1'
         SRP6ClientCredentials clientProof;
         try {
-            clientProof = clientSession.step2(cryptoParams, new BigInteger(salt), serverPublicKeyB);
+            clientProof = clientSession.step2(cryptoParams, new BigInteger(1, salt), serverPublicKeyB);
         } catch (SRP6Exception e) {
             return new FinalLoginResponse("", "", "Login failed, Invalid user credentials: " + e.getMessage()); // is printing e.getMessage needed?
         }
@@ -98,7 +94,7 @@ public class LoginService {
         loginVerifyRequest.setClientPublicKey(clientPublicKeyABase64);
         loginVerifyRequest.setClientProof(clientProofM1Base64);
 
-        var verifyRequest = objectMapper.writeValueAsString(loginVerifyRequest);
+        var verifyRequest = JsonUtil.getObjectMapper().writeValueAsString(loginVerifyRequest);
         HttpRequest verifyHttpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "/login/verify"))
                 .header("Content-Type", "application/json")
@@ -109,7 +105,7 @@ public class LoginService {
         if (loginVerifyResponse.statusCode() != 200) {
             return new FinalLoginResponse("", "", "Login failed, Please check your password! Server returned with code: " + loginVerifyResponse.statusCode());
         }
-        return objectMapper.readValue(loginVerifyResponse.body(), FinalLoginResponse.class);
+        return JsonUtil.getObjectMapper().readValue(loginVerifyResponse.body(), FinalLoginResponse.class);
 
     }
 }

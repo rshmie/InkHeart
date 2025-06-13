@@ -1,7 +1,9 @@
 package io.inkHeart.cli.commad;
 
 import io.inkHeart.cli.auth.LoginService;
-import io.inkHeart.cli.utility.MessagePrinter;
+import io.inkHeart.cli.crypto.CryptoUtils;
+import io.inkHeart.cli.dto.FinalLoginResponse;
+import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;
 
 import java.util.Scanner;
@@ -29,8 +31,9 @@ public class LoginCommand implements Callable<Integer> {
 
         MessagePrinter.info("Initialising secure login...");
 
+        FinalLoginResponse loginResponse;
         try {
-            var loginResponse = new LoginService().handleLogin(email, password);
+            loginResponse = new LoginService().handleLogin(email, password);
             if (loginResponse.jwtToken().isEmpty()) {
                 MessagePrinter.error("Login failed. Please check your credentials and try again.");
                 MessagePrinter.waitForEnter();
@@ -42,14 +45,19 @@ public class LoginCommand implements Callable<Integer> {
             return 1;
         }
 
-        MessagePrinter.success("Login successful! Welcome back, " + email + "!");
-       // System.out.println("\nWelcome back to your journal, " + email + "!");
+        MessagePrinter.success("Login successful - Welcome back, " + email + "!");
 
         //
         // TODO: Here you would proceed to the post-login functionality
         // For example, show a new menu: [1] New Entry, [2] List Entries, [3] Logout
         //
-        new JournalShell().start(email);
+        try {
+            new InteractiveUserSession(loginResponse.jwtToken(),
+                    CryptoUtils.deriveKeyFromPassword(password)).start();
+        } catch (Exception e) {
+            MessagePrinter.error("Error while processing journal operation " + e.getMessage());
+            return 1;
+        }
         return 0;
     }
 
