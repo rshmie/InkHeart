@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static io.inkHeart.cli.CliApplication.API_URL;
 import static io.inkHeart.cli.CliApplication.JOURNAL_BASE_URl;
 
 public class JournalService {
