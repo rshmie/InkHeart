@@ -1,9 +1,6 @@
 package io.inkHeart.contollers;
 
-import io.inkHeart.dto.CreateJournalEntryRequest;
-import io.inkHeart.dto.EncryptedPayload;
-import io.inkHeart.dto.JournalEntryResponse;
-import io.inkHeart.dto.JournalGetResponse;
+import io.inkHeart.dto.*;
 import io.inkHeart.entity.CustomUserDetails;
 import io.inkHeart.service.JournalService;
 import org.springframework.http.ResponseEntity;
@@ -61,7 +58,19 @@ public class JournalEntryController {
         return ResponseEntity.ok().body(getResponse);
     }
 
-//    @GetMapping("entry/{id}")
+    @GetMapping("/recent")
+    public ResponseEntity<List<JournalEntryResponse>> get10RecentEntries(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<JournalEntryResponse> recentJournalEntrySummary = journalService.get10RecentEntriesForUser(userDetails.getUser());
+        return ResponseEntity.ok().body(recentJournalEntrySummary);
+    }
+
+    @GetMapping("/entry/{id}")
+    public ResponseEntity<JournalGetResponse> getCompleteJournalEntryById(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("id") Long id) {
+        JournalGetResponse completeJournalEntryById = journalService.getCompleteJournalEntryById(userDetails.getUser(), id);
+        return ResponseEntity.ok().body(completeJournalEntryById);
+    }
+
+//    @GetMapping("entry/{id}")@AuthenticationPrincipal CustomUserDetails userDetails
 //    public JournalEntryResponse getJournalEntryByID() {
 //
 //    }

@@ -16,4 +16,11 @@ public class GlobalExceptionHandler {
         error.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+
+    @ExceptionHandler(NoJournalEntryFoundException.class)
+    public ResponseEntity<Map<String, String>> handleWhenNoJournalEntryFoundById(NoJournalEntryFoundException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
 }

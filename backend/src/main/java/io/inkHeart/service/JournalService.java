@@ -1,10 +1,9 @@
 package io.inkHeart.service;
 
-import io.inkHeart.dto.CreateJournalEntryRequest;
-import io.inkHeart.dto.EncryptedPayload;
-import io.inkHeart.dto.JournalGetResponse;
+import io.inkHeart.dto.*;
 import io.inkHeart.entity.JournalEntry;
 import io.inkHeart.entity.User;
+import io.inkHeart.exception.NoJournalEntryFoundException;
 import io.inkHeart.repository.JournalEntryRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Service
 public class JournalService {
@@ -58,6 +56,18 @@ public class JournalService {
                 .collect(Collectors.toList());
     }
 
+    public List<JournalEntryResponse> get10RecentEntriesForUser(User user) {
+        return journalEntryRepository.findTop10ByUserOrderByCreatedAtDesc(user)
+                .stream()
+                .map(entry -> new JournalEntryResponse(entry.id(), entry.encryptedTitle(), entry.createdAt(), entry.updatedAt()))
+                .collect(Collectors.toList());
+    }
+
+    public JournalGetResponse getCompleteJournalEntryById(User user, Long journalEntryId) {
+        return mapToResponse(journalEntryRepository.findByIdAndUser(journalEntryId, user)
+                .orElseThrow(() -> new NoJournalEntryFoundException(journalEntryId)));
+    }
+
 //    public List<JournalEntryResponse> getVisibleEntries(User user) {
 //        var now = LocalDateTime.now();
 //        return journalEntryRepository.findByUserAndCreatedAtBeforeAndVisibleAfterBefore(user, now, now)
@@ -70,7 +80,7 @@ public class JournalService {
         return new JournalGetResponse(entry.getId(),
                 new EncryptedPayload(entry.getEncryptedTitle().cipherText(), entry.getEncryptedTitle().iv()),
                 new EncryptedPayload(entry.getEncryptedContent().cipherText(), entry.getEncryptedContent().iv()),
-                new EncryptedPayload(entry.getEncryptedMood().cipherText(), entry.getEncryptedMood().iv()),
+                checkNull(entry.getEncryptedMood()),
                 getEncryptedTagList(entry.getEncryptedTags()), entry.getCreatedAt(), entry.getUpdatedAt(),
                 entry.getVisibleAfter(), entry.getExpiresAt());
     }
