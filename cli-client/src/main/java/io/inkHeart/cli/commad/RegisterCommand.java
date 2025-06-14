@@ -1,6 +1,6 @@
 package io.inkHeart.cli.commad;
 
-import io.inkHeart.cli.auth.RegisterService;
+import io.inkHeart.cli.service.auth.RegisterService;
 import io.inkHeart.cli.util.JsonUtil;
 import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;

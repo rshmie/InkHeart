@@ -1,4 +1,4 @@
-package io.inkHeart.cli.auth;
+package io.inkHeart.cli.service;
 
 import io.inkHeart.cli.crypto.CryptoUtils;
 import io.inkHeart.cli.dto.CreateJournalEntryRequest;
@@ -109,6 +109,10 @@ public class JournalService {
         }
     }
 
+    // Facilitates "My Journal" options implementation
+    public void myJournal() {
+
+    }
     public boolean createEntry(String title, String content) {
         return false;
     }

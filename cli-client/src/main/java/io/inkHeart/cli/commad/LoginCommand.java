@@ -1,6 +1,6 @@
 package io.inkHeart.cli.commad;
 
-import io.inkHeart.cli.auth.LoginService;
+import io.inkHeart.cli.service.auth.LoginService;
 import io.inkHeart.cli.crypto.CryptoUtils;
 import io.inkHeart.cli.dto.FinalLoginResponse;
 import io.inkHeart.cli.util.MessagePrinter;
@@ -52,7 +52,7 @@ public class LoginCommand implements Callable<Integer> {
         // For example, show a new menu: [1] New Entry, [2] List Entries, [3] Logout
         //
         try {
-            new InteractiveUserSession(loginResponse.jwtToken(),
+            new InteractiveJournalUserSession(loginResponse.jwtToken(),
                     CryptoUtils.deriveKeyFromPassword(password)).start();
         } catch (Exception e) {
             MessagePrinter.error("Error while processing journal operation " + e.getMessage());

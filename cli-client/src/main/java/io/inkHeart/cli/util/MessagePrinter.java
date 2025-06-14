@@ -7,6 +7,9 @@ public class MessagePrinter {
     public static void title(String message) {
         System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold,yellow " + message + "|@"));
     }
+    public static void showOption(String option, String message) {
+        System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold,cyan " + option + "|@" + " " + message));
+    }
 
     public static void info(String message) {
         System.out.println(CommandLine.Help.Ansi.AUTO.string("@|cyan " + message + "|@"));

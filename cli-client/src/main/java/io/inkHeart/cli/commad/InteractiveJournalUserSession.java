@@ -1,6 +1,6 @@
 package io.inkHeart.cli.commad;
 
-import io.inkHeart.cli.auth.JournalService;
+import io.inkHeart.cli.service.JournalService;
 import io.inkHeart.cli.util.CLIMenu;
 import io.inkHeart.cli.util.MessagePrinter;
 
@@ -8,12 +8,12 @@ import javax.crypto.SecretKey;
 import java.net.http.HttpClient;
 import java.util.Scanner;
 
-public class InteractiveUserSession {
+public class InteractiveJournalUserSession {
     private final JournalService journalService;
     private final Scanner scanner;
 
     // jwt token expiry handling - TO DO
-    public InteractiveUserSession(String jwtToken, SecretKey encryptionKey) {
+    public InteractiveJournalUserSession(String jwtToken, SecretKey encryptionKey) {
         this.journalService = new JournalService(encryptionKey, jwtToken, HttpClient.newHttpClient());
         this.scanner = new Scanner(System.in);
     }
@@ -25,10 +25,9 @@ public class InteractiveUserSession {
             CLIMenu.showJournalMenu();
             String choice = scanner.nextLine();
             switch (choice.toLowerCase()) {
-                case "1", "n", "new" -> journalService.createEntry();
-                case "2", "l", "list" -> journalService.listEntries(); // You'll need to create this
-               // case "3", "s", "search" -> journalService.searchEntries(); // And this
-                case "5" -> {
+                case "1" -> journalService.createEntry();
+                case "2" -> journalService.myJournal();
+                case "3" -> {
                     running = false;
                     MessagePrinter.success("Logging you out. Goodbye!");
                 }

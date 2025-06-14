@@ -1,4 +1,4 @@
-package io.inkHeart.cli.auth;
+package io.inkHeart.cli.service.auth;
 
 import com.nimbusds.srp6.SRP6CryptoParams;
 import com.nimbusds.srp6.SRP6VerifierGenerator;

@@ -1,4 +1,4 @@
-package io.inkHeart.cli.auth;
+package io.inkHeart.cli.service.auth;
 
 import com.nimbusds.srp6.SRP6ClientCredentials;
 import com.nimbusds.srp6.SRP6ClientSession;
