@@ -11,6 +11,10 @@ public class MessagePrinter {
         System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold,cyan " + option + "|@" + " " + message));
     }
 
+    public static void formatPair(String input1, String separator, String input2) {
+        System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold,cyan " + input1 + "|@" + separator + input2));
+    }
+
     public static void info(String message) {
         System.out.println(CommandLine.Help.Ansi.AUTO.string("@|cyan " + message + "|@"));
     }

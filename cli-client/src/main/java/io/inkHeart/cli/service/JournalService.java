@@ -1,13 +1,13 @@
 package io.inkHeart.cli.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.inkHeart.cli.crypto.CryptoUtils;
-import io.inkHeart.cli.dto.CreateJournalEntryRequest;
-import io.inkHeart.cli.dto.EncryptedPayload;
-import io.inkHeart.cli.dto.JournalEntryResponse;
+import io.inkHeart.cli.dto.*;
 import io.inkHeart.cli.util.JsonUtil;
 import io.inkHeart.cli.util.MessagePrinter;
 
 import javax.crypto.SecretKey;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -15,6 +15,7 @@ import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.inkHeart.cli.CliApplication.JOURNAL_BASE_URl;
 
@@ -36,7 +37,9 @@ public class JournalService {
         String title = scanner.nextLine();
 
         MessagePrinter.prompt("Content: ");
+        System.out.println();
         String content = scanner.nextLine();
+        System.out.println();
 
         MessagePrinter.prompt("Mood (optional): ");
         String mood = scanner.nextLine();
@@ -94,13 +97,12 @@ public class JournalService {
                     .build();
 
             var response = this.httpClient.send(httpJournalEntryRequest, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response : " + response.body());
             JournalEntryResponse journalEntryResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
             if (response.statusCode() == 201 || response.statusCode() == 200) {
-                MessagePrinter.success("Journal entry saved!");
-                String title =  CryptoUtils.decrypt(CryptoUtils.base64EncodedToBytes(journalEntryResponse.encryptedTitle().cipherText()),
-                        this.encryptionKey, CryptoUtils.base64EncodedToBytes(journalEntryResponse.encryptedTitle().iv()), null);
-                MessagePrinter.info("Your journal entry \"" + title + "\" was created on " + journalEntryResponse.createdAt().format(DATE_TIME_FORMATTER));
+                System.out.println();
+                MessagePrinter.success("Entry saved!");
+                String title =  decryptContent(journalEntryResponse.encryptedTitle());
+                MessagePrinter.info("Your journal entry titled \"" + title + "\" was created on " + journalEntryResponse.createdAt().format(DATE_TIME_FORMATTER));
             } else {
                 MessagePrinter.error(" Failed to save entry: " + response.body());
             }
@@ -109,24 +111,76 @@ public class JournalService {
         }
     }
 
-    // Facilitates "My Journal" options implementation
-    public void myJournal() {
 
-    }
-    public boolean createEntry(String title, String content) {
-        return false;
-    }
-
-    public List<String> listEntries() {
+    /**
+     * Lists the recent 10 entries, ordered by createdAt time (DESC)
+     *
+     */
+    public List<DecryptedJournalEntryResponse> listRecentUserEntries() {
+        try {
+            List<JournalEntryResponse> recentEntries = fetchRecentEntries();
+            List<DecryptedJournalEntryResponse> decryptedJournalEntryResponse = new ArrayList<>();
+            for (JournalEntryResponse journalEntry: recentEntries) {
+                decryptedJournalEntryResponse.add(new DecryptedJournalEntryResponse(journalEntry.id(),
+                        decryptContent(journalEntry.encryptedTitle()), journalEntry.createdAt(), journalEntry.updatedAt()));
+            }
+            return decryptedJournalEntryResponse;
+        } catch (Exception ex) {
+            MessagePrinter.error("Unable to get recent entries: " + ex.getMessage());
+        }
         return null;
     }
 
-    public Object search(String keyword) {
-        return new ArrayList<String>();
+    private List<JournalEntryResponse> fetchRecentEntries() throws IOException, InterruptedException {
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(JOURNAL_BASE_URl + "/recent")) // perhaps a config file
+                .header("Authorization", "Bearer " + this.jwtToken)
+                .GET()
+                .build();
+        var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Unable to fetch the journal entries: " + response.statusCode());
+        }
+        return JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<List<JournalEntryResponse>>(){});
     }
 
-    public boolean delete(String title) {
-        return false;
+    /**
+     * View the complete journal entry details by ID
+     * @param id - Journal entry ID
+     */
+    public DecryptedJournalGetResponse viewEntry(Long id) throws IOException, InterruptedException {
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(JOURNAL_BASE_URl + "/entry/" + id))
+                .header("Authorization", "Bearer " + this.jwtToken)
+                .GET()
+                .build();
+
+        HttpResponse<String> response;
+        response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            // Try to parse and print error message from server
+            try {
+                Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<>() {});
+                String errorMessage = errorMap.getOrDefault("error", "Unknown error");
+                MessagePrinter.error("Unable to view entry: " + errorMessage);
+            } catch (Exception e) {
+                MessagePrinter.error("Unable to view entry. Status: " + response.statusCode());
+            }
+            return null;
+        }
+        JournalGetResponse journalGetResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalGetResponse.class);
+        return new DecryptedJournalGetResponse(journalGetResponse.id(), decryptContent(journalGetResponse.encryptedTitle()),
+                decryptContent(journalGetResponse.encryptedContent()), decryptContent(journalGetResponse.encryptedMood()),
+                decryptTags(journalGetResponse.encryptedTags()), journalGetResponse.createdAt(),
+                journalGetResponse.updatedAt(), journalGetResponse.visibleAfter(), journalGetResponse.expiresAt());
+    }
+
+    public void editEntry(Long id) {
+        MessagePrinter.info("Not yet implemented");
+    }
+
+    public void deleteEntry(Long id) {
+        MessagePrinter.info("Not yet implemented");
     }
 
     private EncryptedPayload encryptField(String input) {
@@ -138,7 +192,32 @@ public class JournalService {
                     result.getIvInBase64()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Encryption failed", e);
+            throw new RuntimeException("Encryption failed : " + e.getMessage());
         }
     }
+
+    private String decryptContent(EncryptedPayload encryptedPayload) {
+        if (checkNull(encryptedPayload) == null) {
+            return null;
+        }
+        try {
+            return CryptoUtils.decrypt(CryptoUtils.base64EncodedToBytes(encryptedPayload.cipherText()),
+                    this.encryptionKey,
+                    CryptoUtils.base64EncodedToBytes(encryptedPayload.iv()), null);
+        } catch (Exception e) {
+            throw new RuntimeException("Content decryption failed: " + e.getMessage());
+        }
+    }
+
+    private List<String> decryptTags(List<EncryptedPayload> tags) {
+        if (tags.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return tags.stream().map(this::decryptContent).collect(Collectors.toList());
+    }
+
+    private EncryptedPayload checkNull(EncryptedPayload encryptedPayload) {
+        return encryptedPayload == null ? null : new EncryptedPayload(encryptedPayload.cipherText(), encryptedPayload.iv());
+    }
+
 }

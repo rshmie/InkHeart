@@ -1,6 +1,12 @@
 package io.inkHeart.cli.util;
 
+import io.inkHeart.cli.dto.DecryptedJournalEntryResponse;
+import io.inkHeart.cli.dto.DecryptedJournalGetResponse;
 import picocli.CommandLine;
+
+import java.util.List;
+
+import static io.inkHeart.cli.service.JournalService.DATE_TIME_FORMATTER;
 
 public class CLIMenu {
     public static void printWelcomeMenu() {
@@ -15,11 +21,9 @@ public class CLIMenu {
         System.out.println();
         System.out.println("A secure, encrypted journal where your thoughts stay truly yours.");
         System.out.println();
-        System.out.println(CommandLine.Help.Ansi.AUTO.string("""
-            @|cyan [1]|@ Register a new account
-            @|cyan [2]|@ Log in to your existing account
-            @|cyan [3]|@ Exit
-        """));
+        MessagePrinter.showOption("[1]", "Register a new account"); // cyan bold or cyan?
+        MessagePrinter.showOption("[2]", "Log in to your existing account");
+        MessagePrinter.showOption("[3]", "Exit");
         MessagePrinter.divider();
         MessagePrinter.prompt("Enter your choice:");
 
@@ -50,5 +54,48 @@ public class CLIMenu {
         MessagePrinter.showOption("[4]", "Back to Main Menu\n");
         System.out.println();
 
+    }
+
+
+    // perhaps move into different class ?
+    public static void showJournalEntriesTable(List<DecryptedJournalEntryResponse> entries) {
+        if (entries.isEmpty()) {
+            MessagePrinter.info("You have no journal entries yet.");
+            return;
+        }
+
+        MessagePrinter.divider();
+        System.out.printf("%-5s | %-25s | %-25s | %-25s%n", "ID", "Title", "Created At", "Updated At");
+        MessagePrinter.divider();
+
+        for (DecryptedJournalEntryResponse entry : entries) {
+            System.out.printf("%-5d | %-25s | %-25s | %-25s%n", entry.id(), entry.title(), entry.createdAt(), entry.updatedAt());
+        }
+
+        MessagePrinter.divider();
+    }
+
+    public static void printJournalViewEntries(DecryptedJournalGetResponse decryptedCompleteJournalEntry) {
+        System.out.println();
+        MessagePrinter.formatPair("ID", " : ", String.valueOf(decryptedCompleteJournalEntry.id()));
+        MessagePrinter.formatPair("Title", " : ", decryptedCompleteJournalEntry.decryptedTitle());
+        if (decryptedCompleteJournalEntry.decryptedMood() != null && !decryptedCompleteJournalEntry.decryptedMood().isBlank()) {
+            MessagePrinter.formatPair("Mood", " : ", decryptedCompleteJournalEntry.decryptedMood());
+        }
+        if (decryptedCompleteJournalEntry.decryptedTags() != null  && !decryptedCompleteJournalEntry.decryptedTags().isEmpty()) {
+            MessagePrinter.formatPair("Tag", " : ", String.join(", ", decryptedCompleteJournalEntry.decryptedTags()));
+        }
+        if (decryptedCompleteJournalEntry.expiresAt() != null) {
+            MessagePrinter.formatPair("Expires At", " : ", String.join(", ", decryptedCompleteJournalEntry.expiresAt().format(DATE_TIME_FORMATTER)));
+        }
+        MessagePrinter.formatPair("Created At", " : " , decryptedCompleteJournalEntry.createdAt().format(DATE_TIME_FORMATTER)); // change formatter?
+        if (!decryptedCompleteJournalEntry.createdAt().isEqual(decryptedCompleteJournalEntry.updatedAt())) {
+            MessagePrinter.formatPair("Updated At", " : " , decryptedCompleteJournalEntry.updatedAt().format(DATE_TIME_FORMATTER)); // print only if its updated
+        }
+        MessagePrinter.formatPair("Content", " : ", "");
+        System.out.println();
+        System.out.println(decryptedCompleteJournalEntry.decryptedContent());
+
+        System.out.println();
     }
 }
