@@ -98,4 +98,13 @@ public class CLIMenu {
 
         System.out.println();
     }
+
+    public static void journalEntryActionMenu() {
+        System.out.println(" What would you like to do?");
+        System.out.println("-> Format: <ID> <Action> (e.g. 105 V or B)");
+        MessagePrinter.formatPair("   - [V]", " ", "View Entry");
+        MessagePrinter.formatPair("   - [D]", " ", "Delete Entry");
+        MessagePrinter.formatPair("   - [E]", " ", "Edit Entry");
+        MessagePrinter.formatPair("   - [B]", " ", "Back to Previous Menu");
+    }
 }

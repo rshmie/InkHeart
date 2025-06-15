@@ -51,9 +51,5 @@ public class MessagePrinter {
         System.out.println(CommandLine.Help.Ansi.AUTO.string("@|yellow WARNING: " + message + "|@"));
     }
 
-    public static void logOutMessage() {
-        MessagePrinter.success("You have been logged out.");
-    }
-
 
 }

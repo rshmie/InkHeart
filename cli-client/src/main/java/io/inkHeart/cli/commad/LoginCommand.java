@@ -36,12 +36,10 @@ public class LoginCommand implements Callable<Integer> {
             loginResponse = new LoginService().handleLogin(email, password);
             if (loginResponse.jwtToken().isEmpty()) {
                 MessagePrinter.error("Login failed. Please check your credentials and try again.");
-                MessagePrinter.waitForEnter();
                 return 1;
             }
         } catch (Exception e) {
             MessagePrinter.error("Login failed: " + e.getMessage());
-            MessagePrinter.waitForEnter();
             return 1;
         }
 

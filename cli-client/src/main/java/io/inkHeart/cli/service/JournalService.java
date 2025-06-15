@@ -179,8 +179,29 @@ public class JournalService {
         MessagePrinter.info("Not yet implemented");
     }
 
-    public void deleteEntry(Long id) {
-        MessagePrinter.info("Not yet implemented");
+    public DecryptedJournalEntryResponse deleteEntry(Long id) throws IOException, InterruptedException {
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(JOURNAL_BASE_URl + "/entry/" + id))
+                .header("Authorization", "Bearer " + this.jwtToken)
+                .DELETE()
+                .build();
+
+        HttpResponse<String> response;
+        response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            // Try to parse and print error message from server
+            try {
+                Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<>() {});
+                String errorMessage = errorMap.getOrDefault("error", "Unknown error");
+                MessagePrinter.error("Unable to delete entry: " + errorMessage);
+            } catch (Exception e) {
+                MessagePrinter.error("Unable to delete entry. Status: " + response.statusCode());
+            }
+            return null;
+        }
+        JournalEntryResponse journalDeleteResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
+        return new DecryptedJournalEntryResponse(journalDeleteResponse.id(), decryptContent(journalDeleteResponse.encryptedTitle()),
+                journalDeleteResponse.createdAt(), journalDeleteResponse.updatedAt());
     }
 
     private EncryptedPayload encryptField(String input) {

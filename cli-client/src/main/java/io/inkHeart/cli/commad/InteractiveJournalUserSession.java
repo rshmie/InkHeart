@@ -5,6 +5,7 @@ import io.inkHeart.cli.dto.DecryptedJournalGetResponse;
 import io.inkHeart.cli.service.JournalService;
 import io.inkHeart.cli.util.CLIMenu;
 import io.inkHeart.cli.util.MessagePrinter;
+import org.bouncycastle.util.test.FixedSecureRandom;
 
 import javax.crypto.SecretKey;
 import java.net.http.HttpClient;
@@ -86,11 +87,18 @@ public class InteractiveJournalUserSession {
 
     /**
      * Handle actions such as View, Edit, Delete
+     * What would you like to do?
+     * → Format: <ID> <Action> (e.g. 105 V)
+     *    - [V] View Entry
+     *    - [D] Delete Entry
+     *    - [E] Edit Entry
+     *    - [B] Back to Previous Menu
+     * Enter your choice:
      */
     public void handleEntryActions() {
         while (true) {
-            MessagePrinter.prompt("ACTIONS: Enter an [ID] [Action] (e.g. 105 V or B) to [V]iew | [D]elete | [E]dit | [B]ack: ");
-            System.out.println();
+            CLIMenu.journalEntryActionMenu();
+            System.out.print("Enter your choice: ");
             String input = scanner.nextLine().trim();
             if (input.equalsIgnoreCase("B")) return;
             String[] parts = input.split("\\s+");
@@ -106,7 +114,7 @@ public class InteractiveJournalUserSession {
                 switch (action) {
                     case "v" -> handleViewEntryAction(id);
                     case "e" -> journalService.editEntry(id);
-                    case "d" -> journalService.deleteEntry(id);
+                    case "d" -> handleDeleteEntryAction(id);
                     default -> {
                         MessagePrinter.error("Unknown action. Use V, E, or D.");
                         continue;
@@ -125,6 +133,24 @@ public class InteractiveJournalUserSession {
             DecryptedJournalGetResponse decryptedCompleteJournalEntry = journalService.viewEntry(id);
             if (decryptedCompleteJournalEntry != null) {
                 CLIMenu.printJournalViewEntries(decryptedCompleteJournalEntry);
+            }
+        } catch (Exception ex) {
+            MessagePrinter.error("Unable to view journal entry with id : " + id +  " :" + ex.getMessage());
+        }
+    }
+
+    private void handleDeleteEntryAction(Long id) {
+        try {
+            MessagePrinter.prompt("Are you sure you want to permanently delete this entry? (Y/N) ");
+            String answer = this.scanner.nextLine().trim();
+            if (answer.equalsIgnoreCase("N") || answer.equalsIgnoreCase("No")) {
+                return;
+            }
+            DecryptedJournalEntryResponse deleteEntry = journalService.deleteEntry(id);
+            if (deleteEntry != null) {
+                MessagePrinter.success("\nEntry deleted successfully.");
+                MessagePrinter.info("ID: " + deleteEntry.id() + " | " + "Title: \"" + deleteEntry.title() + "\"" +
+                        " | " + "Created on: " + deleteEntry.createdAt().format(DATE_TIME_FORMATTER));
             }
         } catch (Exception ex) {
             MessagePrinter.error("Unable to view journal entry with id : " + id +  " :" + ex.getMessage());
