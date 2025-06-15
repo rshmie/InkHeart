@@ -70,6 +70,12 @@ public class JournalEntryController {
         return ResponseEntity.ok().body(completeJournalEntryById);
     }
 
+    @DeleteMapping("/entry/{id}")
+    public ResponseEntity<JournalEntryResponse> deleteJournalEntryById(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("id") Long id) {
+        JournalEntryResponse deletedJournalEntryById = journalService.deleteJournalEntryById(userDetails.getUser(), id);
+        return ResponseEntity.ok().body(deletedJournalEntryById);
+    }
+
 //    @GetMapping("entry/{id}")@AuthenticationPrincipal CustomUserDetails userDetails
 //    public JournalEntryResponse getJournalEntryByID() {
 //

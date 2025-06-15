@@ -68,6 +68,13 @@ public class JournalService {
                 .orElseThrow(() -> new NoJournalEntryFoundException(journalEntryId)));
     }
 
+    public JournalEntryResponse deleteJournalEntryById(User user, Long journalEntryId) {
+        JournalEntry journalEntry = journalEntryRepository.findByIdAndUser(journalEntryId, user)
+                .orElseThrow(() -> new NoJournalEntryFoundException(journalEntryId));
+        journalEntryRepository.delete(journalEntry);
+        return new JournalEntryResponse(journalEntry.getId(), journalEntry.getEncryptedTitle(), journalEntry.getCreatedAt(), journalEntry.getUpdatedAt());
+    }
+
 //    public List<JournalEntryResponse> getVisibleEntries(User user) {
 //        var now = LocalDateTime.now();
 //        return journalEntryRepository.findByUserAndCreatedAtBeforeAndVisibleAfterBefore(user, now, now)
