@@ -64,16 +64,23 @@ public class JournalEntryController {
         return ResponseEntity.ok().body(recentJournalEntrySummary);
     }
 
-    @GetMapping("/entry/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<JournalGetResponse> getCompleteJournalEntryById(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("id") Long id) {
         JournalGetResponse completeJournalEntryById = journalService.getCompleteJournalEntryById(userDetails.getUser(), id);
         return ResponseEntity.ok().body(completeJournalEntryById);
     }
 
-    @DeleteMapping("/entry/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<JournalEntryResponse> deleteJournalEntryById(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("id") Long id) {
         JournalEntryResponse deletedJournalEntryById = journalService.deleteJournalEntryById(userDetails.getUser(), id);
         return ResponseEntity.ok().body(deletedJournalEntryById);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<JournalEntryResponse> updateJournalEntryById(@AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long id, @RequestBody UpdateJournalEntryRequest request) {
+        JournalEntryResponse updated = journalService.updateJournalEntryById(userDetails.getUser(), id, request);
+        return ResponseEntity.ok().body(updated);
     }
 
 //    @GetMapping("entry/{id}")@AuthenticationPrincipal CustomUserDetails userDetails

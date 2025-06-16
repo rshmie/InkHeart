@@ -35,21 +35,6 @@ public class JournalService {
         return journalEntry;
     }
 
-    private List<EncryptedPayload> getEncryptedTagList(List<EncryptedPayload> tags) {
-        List<EncryptedPayload> tagList = new ArrayList<>();
-        for (EncryptedPayload tag : tags) {
-            tagList.add(checkNull(tag));
-        }
-        return tagList;
-    }
-//    public List<JournalEntryResponse> getVisibleEntries(User user) {
-//        var now = LocalDateTime.now();
-//        return journalEntryRepository.findByUserAndCreatedAtBeforeAndVisibleAfterBefore(user, now, now)
-//                .stream()
-//                .map(this::mapToResponse)
-//                .collect(Collectors.toList());
-//    }
-
     public List<JournalGetResponse> getAllJournalEntries(String userName) {
         return journalEntryRepository.findAllByUserEmail(userName)
                 .stream().map(this::mapToResponse)
@@ -75,13 +60,48 @@ public class JournalService {
         return new JournalEntryResponse(journalEntry.getId(), journalEntry.getEncryptedTitle(), journalEntry.getCreatedAt(), journalEntry.getUpdatedAt());
     }
 
-//    public List<JournalEntryResponse> getVisibleEntries(User user) {
-//        var now = LocalDateTime.now();
-//        return journalEntryRepository.findByUserAndCreatedAtBeforeAndVisibleAfterBefore(user, now, now)
-//                .stream()
-//                .map(this::mapToResponse)
-//                .collect(Collectors.toList());
-//    }
+    public JournalEntryResponse updateJournalEntryById(User user, Long journalEntryId, UpdateJournalEntryRequest request) {
+        JournalEntry journalEntry = journalEntryRepository.findByIdAndUser(journalEntryId, user)
+                .orElseThrow(() -> new NoJournalEntryFoundException(journalEntryId));
+
+        if (request.encryptedTitle() != null) {
+            journalEntry.setEncryptedTitle(request.encryptedTitle());
+        }
+
+        if (request.encryptedContent() != null) {
+            journalEntry.setEncryptedContent(request.encryptedContent());
+        }
+
+        if (request.encryptedMood() != null) {
+            journalEntry.setEncryptedMood(request.encryptedMood());
+        }
+
+        if (request.encryptedTags() != null) {
+            journalEntry.setEncryptedTags(request.encryptedTags());
+        }
+
+        if (request.visibleAfter() != null) {
+            journalEntry.setVisibleAfter(request.visibleAfter());
+        }
+
+        if (request.expiresAt() != null) {
+            journalEntry.setExpiresAt(request.expiresAt());
+        }
+
+        journalEntry.setUpdatedAt(LocalDateTime.now());
+        journalEntryRepository.save(journalEntry);
+
+        return new JournalEntryResponse(journalEntry.getId(), journalEntry.getEncryptedTitle(), journalEntry.getCreatedAt(), journalEntry.getUpdatedAt());
+    }
+
+
+    private List<EncryptedPayload> getEncryptedTagList(List<EncryptedPayload> tags) {
+        List<EncryptedPayload> tagList = new ArrayList<>();
+        for (EncryptedPayload tag : tags) {
+            tagList.add(checkNull(tag));
+        }
+        return tagList;
+    }
 
     private JournalGetResponse mapToResponse(JournalEntry entry) {
         return new JournalGetResponse(entry.getId(),
@@ -95,4 +115,5 @@ public class JournalService {
     private EncryptedPayload checkNull(EncryptedPayload encryptedPayload) {
         return encryptedPayload == null ? null : new EncryptedPayload(encryptedPayload.cipherText(), encryptedPayload.iv());
     }
+
 }
