@@ -8,6 +8,7 @@ import io.inkHeart.cli.util.MessagePrinter;
 import org.bouncycastle.util.test.FixedSecureRandom;
 
 import javax.crypto.SecretKey;
+import java.net.MulticastSocket;
 import java.net.http.HttpClient;
 import java.util.List;
 import java.util.Scanner;
@@ -20,8 +21,8 @@ public class InteractiveJournalUserSession {
 
     // jwt token expiry handling - TO DO
     public InteractiveJournalUserSession(String jwtToken, SecretKey encryptionKey) {
-        this.journalService = new JournalService(encryptionKey, jwtToken, HttpClient.newHttpClient());
         this.scanner = new Scanner(System.in);
+        this.journalService = new JournalService(encryptionKey, jwtToken, HttpClient.newHttpClient(), this.scanner);
     }
 
     public void start() {
@@ -113,7 +114,7 @@ public class InteractiveJournalUserSession {
 
                 switch (action) {
                     case "v" -> handleViewEntryAction(id);
-                    case "e" -> journalService.editEntry(id);
+                    case "e" -> handleEditEntryAction(id);
                     case "d" -> handleDeleteEntryAction(id);
                     default -> {
                         MessagePrinter.error("Unknown action. Use V, E, or D.");
@@ -136,6 +137,20 @@ public class InteractiveJournalUserSession {
             }
         } catch (Exception ex) {
             MessagePrinter.error("Unable to view journal entry with id : " + id +  " :" + ex.getMessage());
+        }
+    }
+
+    private void handleEditEntryAction(Long id) {
+        try {
+            DecryptedJournalEntryResponse editedEntry = journalService.editEntry(id);
+            if (editedEntry != null) {
+                MessagePrinter.success("\nEntry updated successfully.");
+                MessagePrinter.info("ID: " + editedEntry.id() + " | " + "Title: \"" + editedEntry.title() + "\"" +
+                        " | " + "Created on: " + editedEntry.createdAt().format(DATE_TIME_FORMATTER) +
+                        " | " + "Updated on: " + editedEntry.updatedAt().format(DATE_TIME_FORMATTER));
+            }
+        } catch (Exception ex) {
+            MessagePrinter.error("Unable to edit journal entry with id : " + id +  " :" + ex.getMessage());
         }
     }
 

@@ -3,6 +3,7 @@ package io.inkHeart.cli.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.inkHeart.cli.crypto.CryptoUtils;
 import io.inkHeart.cli.dto.*;
+import io.inkHeart.cli.util.CLIMenu;
 import io.inkHeart.cli.util.JsonUtil;
 import io.inkHeart.cli.util.MessagePrinter;
 
@@ -24,93 +25,58 @@ public class JournalService {
     private final SecretKey encryptionKey;
     private final String jwtToken;
     private final HttpClient httpClient;
-    public JournalService(SecretKey encryptionKey, String jwtToken, HttpClient httpClient) {
+    private final Scanner scanner;
+    public JournalService(SecretKey encryptionKey, String jwtToken, HttpClient httpClient, Scanner scanner) {
         this.encryptionKey = encryptionKey;
         this.jwtToken = jwtToken;
         this.httpClient = httpClient;
+        this.scanner = scanner;
     }
 
     public void createEntry() {
-        Scanner scanner = new Scanner(System.in);
-
-        MessagePrinter.prompt("Title: ");
-        String title = scanner.nextLine();
-
-        MessagePrinter.prompt("Content: ");
-        System.out.println();
-        String content = scanner.nextLine();
-        System.out.println();
-
-        MessagePrinter.prompt("Mood (optional): ");
-        String mood = scanner.nextLine();
-
-        MessagePrinter.prompt("Tags (comma-separated, optional): ");
-        String tagInput = scanner.nextLine();
-        List<String> tags = Arrays.stream(tagInput.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
-
-        MessagePrinter.prompt("Visible After (yyyy-MM-dd HH:mm, optional - blank = now): ");
-        String visibleAfterStr = scanner.nextLine();
-
-        MessagePrinter.prompt("Expires At (yyyy-MM-dd HH:mm, optional - blank = never): ");
-        String expiresAtStr = scanner.nextLine();
-
+        CreateEntryPromptResult result = CLIMenu.getCreateEntryPromptResult(this.scanner);
         try {
-            EncryptedPayload encryptedTitle = title.isBlank() ? null : encryptField(title);
-            EncryptedPayload encryptedContent = content.isBlank() ? null: encryptField(content);
-            EncryptedPayload encryptedMood = mood.isBlank() ? null : encryptField(mood);
-            List<EncryptedPayload> encryptedTags = tags.isEmpty() ? Collections.emptyList() : tags.stream()
+            EncryptedPayload encryptedTitle = result.title().isBlank() ? null : encryptField(result.title());
+            EncryptedPayload encryptedContent = result.content().isBlank() ? null: encryptField(result.content());
+            EncryptedPayload encryptedMood = result.mood().isBlank() ? null : encryptField(result.mood());
+            List<EncryptedPayload> encryptedTags = result.tags().isEmpty() ? Collections.emptyList() : result.tags().stream()
                     .map(this::encryptField)
                     .toList();
-            LocalDateTime visibleAfter = visibleAfterStr.isBlank()
+            LocalDateTime visibleAfter = result.visibleAfterStr().isBlank()
                     ? LocalDateTime.now()
-                    : LocalDateTime.parse(visibleAfterStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            LocalDateTime expiresAt = expiresAtStr.isBlank()
+                    : LocalDateTime.parse(result.visibleAfterStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            LocalDateTime expiresAt = result.expiresAtStr().isBlank()
                     ? null
-                    : LocalDateTime.parse(expiresAtStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    : LocalDateTime.parse(result.expiresAtStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
-            CreateJournalEntryRequest request = new CreateJournalEntryRequest(
-                    encryptedTitle,
-                    encryptedContent,
-                    encryptedTags,
-                    encryptedMood,
-                    visibleAfter,
-                    expiresAt
-            );
-            sendToServer(request);
+            CreateJournalEntryRequest request = new CreateJournalEntryRequest(encryptedTitle, encryptedContent, encryptedTags,
+                    encryptedMood, visibleAfter, expiresAt);
+            try {
+                String requestJson = JsonUtil.getObjectMapper().writeValueAsString(request);
+                HttpRequest httpJournalEntryRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(JOURNAL_BASE_URl + "/create"))
+                        .header("Authorization", "Bearer " + this.jwtToken)
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                        .build();
+
+                var response = this.httpClient.send(httpJournalEntryRequest, HttpResponse.BodyHandlers.ofString());
+                JournalEntryResponse journalEntryResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
+                if (response.statusCode() == 201 || response.statusCode() == 200) {
+                    System.out.println();
+                    MessagePrinter.success("Entry saved!");
+                    String title =  decryptContent(journalEntryResponse.encryptedTitle());
+                    MessagePrinter.info("Your journal entry titled \"" + title + "\" was created on " + journalEntryResponse.createdAt().format(DATE_TIME_FORMATTER));
+                } else {
+                    MessagePrinter.error(" Failed to save entry: " + response.body());
+                }
+            } catch (Exception e) {
+                MessagePrinter.error("Failed sending request: " + e.getMessage());
+            }
         } catch (Exception e) {
             MessagePrinter.error("Error while encrypting or sending entry: " + e.getMessage());
         }
-
     }
-
-    private void sendToServer(CreateJournalEntryRequest request) {
-        try {
-            String requestJson = JsonUtil.getObjectMapper().writeValueAsString(request);
-            HttpRequest httpJournalEntryRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(JOURNAL_BASE_URl + "/create"))
-                    .header("Authorization", "Bearer " + this.jwtToken)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestJson))
-                    .build();
-
-            var response = this.httpClient.send(httpJournalEntryRequest, HttpResponse.BodyHandlers.ofString());
-            JournalEntryResponse journalEntryResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
-            if (response.statusCode() == 201 || response.statusCode() == 200) {
-                System.out.println();
-                MessagePrinter.success("Entry saved!");
-                String title =  decryptContent(journalEntryResponse.encryptedTitle());
-                MessagePrinter.info("Your journal entry titled \"" + title + "\" was created on " + journalEntryResponse.createdAt().format(DATE_TIME_FORMATTER));
-            } else {
-                MessagePrinter.error(" Failed to save entry: " + response.body());
-            }
-        } catch (Exception e) {
-            MessagePrinter.error("Failed sending request: " + e.getMessage());
-        }
-    }
-
 
     /**
      * Lists the recent 10 entries, ordered by createdAt time (DESC)
@@ -145,49 +111,47 @@ public class JournalService {
     }
 
     /**
-     * View the complete journal entry details by ID
+     * View the complete details of journal entry specified by ID - GET request
      * @param id - Journal entry ID
      */
     public DecryptedJournalGetResponse viewEntry(Long id) throws IOException, InterruptedException {
         var request = HttpRequest.newBuilder()
-                .uri(URI.create(JOURNAL_BASE_URl + "/entry/" + id))
+                .uri(URI.create(JOURNAL_BASE_URl + "/" + id))
                 .header("Authorization", "Bearer " + this.jwtToken)
                 .GET()
                 .build();
 
-        HttpResponse<String> response;
-        response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
             // Try to parse and print error message from server
             try {
                 Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<>() {});
                 String errorMessage = errorMap.getOrDefault("error", "Unknown error");
-                MessagePrinter.error("Unable to view entry: " + errorMessage);
+                MessagePrinter.error("Unable to get the entry: " + errorMessage);
             } catch (Exception e) {
-                MessagePrinter.error("Unable to view entry. Status: " + response.statusCode());
+                MessagePrinter.error("Unable to get the entry. Server Status: " + response.statusCode());
             }
             return null;
         }
         JournalGetResponse journalGetResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalGetResponse.class);
+        if (journalGetResponse == null) {
+           MessagePrinter.error("Unable to view journal entry!");
+           return null;
+        }
         return new DecryptedJournalGetResponse(journalGetResponse.id(), decryptContent(journalGetResponse.encryptedTitle()),
                 decryptContent(journalGetResponse.encryptedContent()), decryptContent(journalGetResponse.encryptedMood()),
                 decryptTags(journalGetResponse.encryptedTags()), journalGetResponse.createdAt(),
                 journalGetResponse.updatedAt(), journalGetResponse.visibleAfter(), journalGetResponse.expiresAt());
     }
 
-    public void editEntry(Long id) {
-        MessagePrinter.info("Not yet implemented");
-    }
-
     public DecryptedJournalEntryResponse deleteEntry(Long id) throws IOException, InterruptedException {
         var request = HttpRequest.newBuilder()
-                .uri(URI.create(JOURNAL_BASE_URl + "/entry/" + id))
+                .uri(URI.create(JOURNAL_BASE_URl + "/" + id))
                 .header("Authorization", "Bearer " + this.jwtToken)
                 .DELETE()
                 .build();
 
-        HttpResponse<String> response;
-        response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
             // Try to parse and print error message from server
             try {
@@ -195,13 +159,65 @@ public class JournalService {
                 String errorMessage = errorMap.getOrDefault("error", "Unknown error");
                 MessagePrinter.error("Unable to delete entry: " + errorMessage);
             } catch (Exception e) {
-                MessagePrinter.error("Unable to delete entry. Status: " + response.statusCode());
+                MessagePrinter.error("Unable to delete entry. Server Status: " + response.statusCode());
             }
             return null;
         }
         JournalEntryResponse journalDeleteResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
         return new DecryptedJournalEntryResponse(journalDeleteResponse.id(), decryptContent(journalDeleteResponse.encryptedTitle()),
                 journalDeleteResponse.createdAt(), journalDeleteResponse.updatedAt());
+    }
+
+    public DecryptedJournalEntryResponse editEntry(Long id) throws IOException, InterruptedException {
+        // Get a journal entry
+        DecryptedJournalGetResponse originalEntry = viewEntry(id);
+        CLIMenu.printJournalViewEntries(originalEntry);
+
+        CreateEntryPromptResult editedEntry = CLIMenu.promptForEditingJournalEntry(id, this.scanner);
+        EncryptedPayload encryptedTitle = editedEntry.title().isBlank() ? null :
+                (!editedEntry.title().equals(originalEntry.decryptedTitle()) ? encryptField(editedEntry.title()) : null);
+
+        EncryptedPayload encryptedContent = editedEntry.content().isBlank() ? null :
+                (!editedEntry.content().equals(originalEntry.decryptedContent()) ? encryptField(editedEntry.content()) : null);
+
+        EncryptedPayload encryptedMood = editedEntry.mood().isBlank() ? null :
+                (!editedEntry.mood().equals(originalEntry.decryptedMood()) ? encryptField(editedEntry.mood()) : null);
+
+        List<EncryptedPayload> encryptedTags = editedEntry.tags().isEmpty() ? null :
+                (!editedEntry.tags().equals(originalEntry.decryptedTags()) ? editedEntry.tags().stream().map(this::encryptField).toList() : null);
+
+        LocalDateTime visibleAfter = editedEntry.visibleAfterStr().isBlank() ? null :
+                LocalDateTime.parse(editedEntry.visibleAfterStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
+        LocalDateTime expiresAt = editedEntry.expiresAtStr().isBlank() ? null :
+                LocalDateTime.parse(editedEntry.expiresAtStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
+        UpdateJournalEntryRequest request = new UpdateJournalEntryRequest(encryptedTitle, encryptedContent,
+                encryptedMood, encryptedTags, visibleAfter, expiresAt);
+        var editRequestJson = JsonUtil.getObjectMapper().writeValueAsString(request);
+
+        // Send the PATCH request to server
+        HttpRequest httpJournalEditRequest = HttpRequest.newBuilder()
+                .uri(URI.create(JOURNAL_BASE_URl + "/" + id))
+                .header("Authorization", "Bearer " + this.jwtToken)
+                .header("Content-Type", "application/json")
+                .method("PATCH", HttpRequest.BodyPublishers.ofString(editRequestJson))
+                .build();
+
+        var response = this.httpClient.send(httpJournalEditRequest, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            try {
+                Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<>() {});
+                String errorMessage = errorMap.getOrDefault("error", "Unknown error");
+                MessagePrinter.error("Failed to update entry: " + errorMessage);
+            } catch (Exception e) {
+                MessagePrinter.error("Failed to update entry. Server Status: " + response.statusCode());
+            }
+            return null;
+        }
+        JournalEntryResponse journalEditResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
+        return new DecryptedJournalEntryResponse(journalEditResponse.id(), decryptContent(journalEditResponse.encryptedTitle()),
+                journalEditResponse.createdAt(), journalEditResponse.updatedAt());
     }
 
     private EncryptedPayload encryptField(String input) {

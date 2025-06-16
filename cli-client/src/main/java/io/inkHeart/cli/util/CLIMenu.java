@@ -1,10 +1,12 @@
 package io.inkHeart.cli.util;
 
+import io.inkHeart.cli.dto.CreateEntryPromptResult;
 import io.inkHeart.cli.dto.DecryptedJournalEntryResponse;
 import io.inkHeart.cli.dto.DecryptedJournalGetResponse;
-import picocli.CommandLine;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 import static io.inkHeart.cli.service.JournalService.DATE_TIME_FORMATTER;
 
@@ -58,6 +60,15 @@ public class CLIMenu {
 
 
     // perhaps move into different class ?
+    public static void journalEntryActionMenu() {
+        System.out.println(" What would you like to do?");
+        System.out.println("-> Format: <ID> <Action> (e.g. 105 V or B)");
+        MessagePrinter.formatPair("   - [V]", " ", "View Entry");
+        MessagePrinter.formatPair("   - [D]", " ", "Delete Entry");
+        MessagePrinter.formatPair("   - [E]", " ", "Edit Entry");
+        MessagePrinter.formatPair("   - [B]", " ", "Back to Previous Menu");
+    }
+
     public static void showJournalEntriesTable(List<DecryptedJournalEntryResponse> entries) {
         if (entries.isEmpty()) {
             MessagePrinter.info("You have no journal entries yet.");
@@ -99,12 +110,37 @@ public class CLIMenu {
         System.out.println();
     }
 
-    public static void journalEntryActionMenu() {
-        System.out.println(" What would you like to do?");
-        System.out.println("-> Format: <ID> <Action> (e.g. 105 V or B)");
-        MessagePrinter.formatPair("   - [V]", " ", "View Entry");
-        MessagePrinter.formatPair("   - [D]", " ", "Delete Entry");
-        MessagePrinter.formatPair("   - [E]", " ", "Edit Entry");
-        MessagePrinter.formatPair("   - [B]", " ", "Back to Previous Menu");
+    public static CreateEntryPromptResult getCreateEntryPromptResult(Scanner scanner) {
+        MessagePrinter.prompt("Title: ");
+        String title = scanner.nextLine();
+
+        MessagePrinter.prompt("Content: ");
+        System.out.println();
+        String content = scanner.nextLine();
+        System.out.println();
+
+        MessagePrinter.prompt("Mood (optional): ");
+        String mood = scanner.nextLine();
+
+        MessagePrinter.prompt("Tags (comma-separated, optional): ");
+        String tagInput = scanner.nextLine();
+        List<String> tags = Arrays.stream(tagInput.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        MessagePrinter.prompt("Visible After (yyyy-MM-dd HH:mm, optional - blank = now): ");
+        String visibleAfterStr = scanner.nextLine();
+
+        MessagePrinter.prompt("Expires At (yyyy-MM-dd HH:mm, optional - blank = never): ");
+        String expiresAtStr = scanner.nextLine();
+        return new CreateEntryPromptResult(title, content, mood, tags, visibleAfterStr, expiresAtStr);
+    }
+
+    public static CreateEntryPromptResult promptForEditingJournalEntry(Long id, Scanner scanner) {
+        System.out.println();
+        MessagePrinter.info("Edit the required journal fields. If left blank, the respective fields remains same as before");
+        MessagePrinter.formatPair("ID", ": ", String.valueOf(id));
+        return getCreateEntryPromptResult(scanner);
     }
 }
