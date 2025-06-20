@@ -1,6 +1,7 @@
 package io.inkHeart.cli.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import io.inkHeart.cli.commad.InteractiveJournalUserSession;
 import io.inkHeart.cli.crypto.CryptoUtils;
 import io.inkHeart.cli.dto.*;
 import io.inkHeart.cli.util.CLIMenu;
@@ -22,6 +23,8 @@ import static io.inkHeart.cli.CliApplication.JOURNAL_BASE_URl;
 
 public class JournalService {
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm a");
+    public static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    public static final DateTimeFormatter FALL_BACK_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final SecretKey encryptionKey;
     private final String jwtToken;
     private final HttpClient httpClient;
@@ -44,10 +47,10 @@ public class JournalService {
                     .toList();
             LocalDateTime visibleAfter = result.visibleAfterStr().isBlank()
                     ? LocalDateTime.now()
-                    : LocalDateTime.parse(result.visibleAfterStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    : LocalDateTime.parse(result.visibleAfterStr(), INPUT_DATE_TIME_FORMATTER);
             LocalDateTime expiresAt = result.expiresAtStr().isBlank()
                     ? null
-                    : LocalDateTime.parse(result.expiresAtStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    : LocalDateTime.parse(result.expiresAtStr(), INPUT_DATE_TIME_FORMATTER);
 
             CreateJournalEntryRequest request = new CreateJournalEntryRequest(encryptedTitle, encryptedContent, encryptedTags,
                     encryptedMood, visibleAfter, expiresAt);
@@ -76,6 +79,31 @@ public class JournalService {
         } catch (Exception e) {
             MessagePrinter.error("Error while encrypting or sending entry: " + e.getMessage());
         }
+    }
+
+    public List<DecryptedJournalEntryResponse> listEntriesWithinRange(LocalDateTime fromDate, LocalDateTime toDate) {
+        try {
+            String url = JOURNAL_BASE_URl + "?from=" + fromDate + "&to=" + toDate;
+            var request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + this.jwtToken)
+                    .GET()
+                    .build();
+            var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Unable to get the journal entries within the specified range: " + response.statusCode());
+            }
+            List<JournalEntryResponse> entriesWithinRange = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<List<JournalEntryResponse>>(){});
+            List<DecryptedJournalEntryResponse> decryptedJournalEntryResponse = new ArrayList<>();
+            for (JournalEntryResponse journalEntry: entriesWithinRange) {
+                decryptedJournalEntryResponse.add(new DecryptedJournalEntryResponse(journalEntry.id(),
+                        decryptContent(journalEntry.encryptedTitle()), journalEntry.createdAt(), journalEntry.updatedAt()));
+            }
+            return decryptedJournalEntryResponse;
+        } catch (Exception ex) {
+            MessagePrinter.error("Unable to get entries within the specified range: " + ex.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -187,10 +215,10 @@ public class JournalService {
                 (!editedEntry.tags().equals(originalEntry.decryptedTags()) ? editedEntry.tags().stream().map(this::encryptField).toList() : null);
 
         LocalDateTime visibleAfter = editedEntry.visibleAfterStr().isBlank() ? null :
-                LocalDateTime.parse(editedEntry.visibleAfterStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                LocalDateTime.parse(editedEntry.visibleAfterStr(), INPUT_DATE_TIME_FORMATTER);
 
         LocalDateTime expiresAt = editedEntry.expiresAtStr().isBlank() ? null :
-                LocalDateTime.parse(editedEntry.expiresAtStr(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                LocalDateTime.parse(editedEntry.expiresAtStr(), INPUT_DATE_TIME_FORMATTER);
 
         UpdateJournalEntryRequest request = new UpdateJournalEntryRequest(encryptedTitle, encryptedContent,
                 encryptedMood, encryptedTags, visibleAfter, expiresAt);

@@ -1,19 +1,22 @@
 package io.inkHeart.cli.commad;
 
+import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
 import io.inkHeart.cli.dto.DecryptedJournalEntryResponse;
 import io.inkHeart.cli.dto.DecryptedJournalGetResponse;
 import io.inkHeart.cli.service.JournalService;
 import io.inkHeart.cli.util.CLIMenu;
 import io.inkHeart.cli.util.MessagePrinter;
-import org.bouncycastle.util.test.FixedSecureRandom;
 
 import javax.crypto.SecretKey;
-import java.net.MulticastSocket;
 import java.net.http.HttpClient;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
 
-import static io.inkHeart.cli.service.JournalService.DATE_TIME_FORMATTER;
+import static io.inkHeart.cli.service.JournalService.*;
 
 public class InteractiveJournalUserSession {
     private final JournalService journalService;
@@ -53,19 +56,69 @@ public class InteractiveJournalUserSession {
                     handleListingRecentEntries();
                     break;
                 case "2":
-                    MessagePrinter.info("Filter by Date Range - Not implemented yet.");
+                    handleListingEntriesWithinTheTimeRange();
                     break;
                 case "3":
                     MessagePrinter.info("Full-Text Search - Not implemented yet.");
                     break;
                 case "4":
-                    // This is how you "go back to the previous menu".
-                    // By exiting this loop, control returns to the main `start()` loop.
+                    // Go back to the previous menu
+                    // By exiting this loop, control returns to the main 'start()' loop.
                     inSubMenu = false;
                     break;
                 default:
                     MessagePrinter.error("Invalid option.");
                     break;
+            }
+        }
+    }
+
+    private void handleListingEntriesWithinTheTimeRange() {
+        try {
+            MessagePrinter.info("Please enter the date range.");
+            MessagePrinter.info("Format: yyyy-MM-dd HH:mm or yyyy-MM-dd (e.g., 2025-06-01 05:00 or 2025-06-01)");
+
+            MessagePrinter.prompt("From: ");
+            String fromStr = scanner.nextLine().trim();
+            MessagePrinter.prompt("To: ");
+            String toStr = scanner.nextLine().trim();
+
+            LocalDateTime fromDate = parseInputDate(fromStr);
+            LocalDateTime toDate = parseInputDate(toStr);
+
+            if (fromDate == null || toDate == null) {
+                MessagePrinter.error("Invalid date format. Use yyyy-MM-dd or yyyy-MM-dd HH:mm.");
+                return;
+            }
+
+            if (toDate.isBefore(fromDate)) {
+                MessagePrinter.error("End date cannot be before start date.");
+                return;
+            }
+
+            List<DecryptedJournalEntryResponse> entries = journalService.listEntriesWithinRange(fromDate, toDate);
+            if (entries.isEmpty()) {
+                MessagePrinter.info("No journal entries found in this time range.");
+                return;
+            }
+
+            CLIMenu.showJournalEntriesTable(entries);
+            handleEntryActions();
+
+        } catch (Exception e) {
+            MessagePrinter.error("Could not retrieve journal entries: " + e.getMessage());
+        }
+    }
+
+
+    private LocalDateTime parseInputDate(String input) {
+        try {
+            return LocalDateTime.parse(input, INPUT_DATE_TIME_FORMATTER);
+        } catch (DateTimeParseException e1) {
+            try {
+                return LocalDate.parse(input, FALL_BACK_TIME_FORMATTER).atStartOfDay();
+            } catch (DateTimeParseException e2) {
+                return null;
             }
         }
     }

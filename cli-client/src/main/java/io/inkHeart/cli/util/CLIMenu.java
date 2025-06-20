@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import static io.inkHeart.cli.service.JournalService.DATE_TIME_FORMATTER;
+import static io.inkHeart.cli.service.JournalService.INPUT_DATE_TIME_FORMATTER;
 
 public class CLIMenu {
     public static void printWelcomeMenu() {
@@ -50,9 +51,9 @@ public class CLIMenu {
         System.out.println(" Find an entry to view, edit, or delete.");
         System.out.println("Choose how you'd like to find it: ");
         MessagePrinter.divider();
-        MessagePrinter.showOption("[1]", "List Recent Entries\n  -> Shows the 10 most recent entry titles.");
-        MessagePrinter.showOption("[2]", "Filter by Date Range\n  ->  Finds all entries between two specific dates.");
-        MessagePrinter.showOption("[3]", "Full-Text Search\n  -> Search for a word, mood or tag across your entire journal.");
+        MessagePrinter.showOption("[1]", "List Recent Entries\n  -> Shows the 10 most recent entry titles.\n");
+        MessagePrinter.showOption("[2]", "Filter by Date Range\n  -> Finds all entries between two specific dates.\n");
+        MessagePrinter.showOption("[3]", "Full-Text Search\n  -> Search for a word, mood or tag across your entire journal.\n");
         MessagePrinter.showOption("[4]", "Back to Main Menu\n");
         System.out.println();
 
@@ -76,14 +77,21 @@ public class CLIMenu {
         }
 
         MessagePrinter.divider();
-        System.out.printf("%-5s | %-25s | %-25s | %-25s%n", "ID", "Title", "Created At", "Updated At");
+        System.out.printf("%-5s  | %-30s | %-25s | %-25s%n", "ID", "Title", "Created At", "Updated At");
         MessagePrinter.divider();
 
         for (DecryptedJournalEntryResponse entry : entries) {
-            System.out.printf("%-5d | %-25s | %-25s | %-25s%n", entry.id(), entry.title(), entry.createdAt(), entry.updatedAt());
+            System.out.printf("%-5d | %-25s | %-25s | %-25s%n", entry.id(), truncate(entry.title(), 25), entry.createdAt().format(INPUT_DATE_TIME_FORMATTER), entry.updatedAt().format(INPUT_DATE_TIME_FORMATTER));
         }
 
         MessagePrinter.divider();
+    }
+
+    /**
+     * Truncate with ellipsis
+     */
+    private static String truncate(String text, int maxLength) {
+        return text.length() > maxLength ? text.substring(0, maxLength - 3) + "..." : text;
     }
 
     public static void printJournalViewEntries(DecryptedJournalGetResponse decryptedCompleteJournalEntry) {
