@@ -3,6 +3,7 @@ package io.inkHeart.contollers;
 import io.inkHeart.dto.*;
 import io.inkHeart.entity.CustomUserDetails;
 import io.inkHeart.service.JournalService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /*
@@ -82,6 +84,17 @@ public class JournalEntryController {
         JournalEntryResponse updated = journalService.updateJournalEntryById(userDetails.getUser(), id, request);
         return ResponseEntity.ok().body(updated);
     }
+
+    @GetMapping
+    public ResponseEntity<List<JournalEntryResponse>> getEntriesInDateRange(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam("from") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") LocalDateTime from,
+            @RequestParam("to") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") LocalDateTime to) {
+
+        List<JournalEntryResponse> entriesBetweenRange = journalService.getJournalEntriesBetweenRange(userDetails.getUser(), from, to);
+        return ResponseEntity.ok().body(entriesBetweenRange);
+    }
+
 
 //    @GetMapping("entry/{id}")@AuthenticationPrincipal CustomUserDetails userDetails
 //    public JournalEntryResponse getJournalEntryByID() {

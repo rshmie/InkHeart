@@ -95,6 +95,13 @@ public class JournalService {
     }
 
 
+    public List<JournalEntryResponse> getJournalEntriesBetweenRange(User user, LocalDateTime from, LocalDateTime to) {
+        return journalEntryRepository.findAllByUserAndCreatedAtBetween(user, from, to)
+                .stream().map(entry -> new JournalEntryResponse(entry.getId(), entry.getEncryptedTitle(),
+                        entry.getCreatedAt(), entry.getUpdatedAt()))
+                .collect(Collectors.toList());
+    }
+
     private List<EncryptedPayload> getEncryptedTagList(List<EncryptedPayload> tags) {
         List<EncryptedPayload> tagList = new ArrayList<>();
         for (EncryptedPayload tag : tags) {

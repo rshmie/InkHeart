@@ -15,7 +15,10 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
     // Belong to the user which are now visible after visibleAfter timestamp
     List<JournalEntry> findByUserAndCreatedAtBeforeAndVisibleAfterBefore(User user, LocalDateTime now1, LocalDateTime now2);
     List<JournalEntry> findAllByUserEmail(String userName);
-
     List<JournalEntryResponse> findTop10ByUserOrderByCreatedAtDesc(User user);
     Optional<JournalEntry> findByIdAndUser(Long id, User user);
+
+    // createdAt >= from AND createdAt <= to
+    List<JournalEntry> findAllByUserAndCreatedAtBetween(User user, LocalDateTime from, LocalDateTime to);
+
 }

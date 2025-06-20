@@ -51,11 +51,5 @@ PARALLELISM = 1          // Maintains cross-platform compatibility
     * Optional metadata (e.g., timestamps or entry IDs) that is bound to the ciphertext for authenticity.
     * Prevents tampering with critical metadata without affecting confidentiality.
 
-### 4. Password Hashing for Authentication
-
-* Also uses `Argon2id` with same parameters.
-* Ensures a consistent and hardened security approach for both storage and encryption flows.
-
-
 
 
