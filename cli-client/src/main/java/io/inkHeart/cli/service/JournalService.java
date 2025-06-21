@@ -1,7 +1,6 @@
 package io.inkHeart.cli.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import io.inkHeart.cli.commad.InteractiveJournalUserSession;
 import io.inkHeart.cli.crypto.CryptoUtils;
 import io.inkHeart.cli.dto.*;
 import io.inkHeart.cli.util.CLIMenu;
@@ -246,6 +245,61 @@ public class JournalService {
         JournalEntryResponse journalEditResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
         return new DecryptedJournalEntryResponse(journalEditResponse.id(), decryptContent(journalEditResponse.encryptedTitle()),
                 journalEditResponse.createdAt(), journalEditResponse.updatedAt());
+    }
+    public List<DecryptedJournalEntryResponse> searchEntries(String tag, String mood, String content) throws IOException, InterruptedException {
+        List<DecryptedJournalGetResponse> decryptedEntryList = getAllTheJournalEntries();
+        if (decryptedEntryList == null || decryptedEntryList.isEmpty()) {
+            return null;
+        }
+
+        Set<Long> seenIds = new HashSet<>();
+        List<DecryptedJournalEntryResponse> searchResult = new ArrayList<>();
+        for (DecryptedJournalGetResponse entry : decryptedEntryList) {
+            boolean match = tag != null && !tag.isBlank() && entry.decryptedTags().stream().anyMatch(t -> t.equalsIgnoreCase(tag));
+
+            if (mood != null && !mood.isBlank() && entry.decryptedMood().equalsIgnoreCase(mood)) {
+                match = true;
+            }
+            if (content != null && !content.isBlank() && entry.decryptedContent().toLowerCase().contains(content.toLowerCase())) {
+                match = true;
+            }
+
+            if (match && !seenIds.contains(entry.id())) {
+                searchResult.add(new DecryptedJournalEntryResponse(entry.id(), entry.decryptedTitle(), entry.createdAt(), entry.updatedAt()));
+                seenIds.add(entry.id());
+            }
+        }
+        return searchResult;
+    }
+
+    private List<DecryptedJournalGetResponse> getAllTheJournalEntries() throws IOException, InterruptedException {
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(JOURNAL_BASE_URl + "/entries"))
+                .header("Authorization", "Bearer " + this.jwtToken)
+                .GET()
+                .build();
+
+        var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            try {
+                Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<>() {});
+                String errorMessage = errorMap.getOrDefault("error", "Unknown error");
+                MessagePrinter.error("Failed to get all the journal entry: " + errorMessage);
+            } catch (Exception e) {
+                MessagePrinter.error("Failed to get all the journal entry. Server Status: " + response.statusCode());
+            }
+            return null;
+        }
+        List<JournalGetResponse> responseList = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<List<JournalGetResponse>>(){});
+        List<DecryptedJournalGetResponse> decryptedJournalGetResponseList = new ArrayList<>();
+        for (JournalGetResponse journalGetResponse: responseList) {
+            decryptedJournalGetResponseList.add(new DecryptedJournalGetResponse(journalGetResponse.id(), decryptContent(journalGetResponse.encryptedTitle()),
+                    decryptContent(journalGetResponse.encryptedContent()), decryptContent(journalGetResponse.encryptedMood()),
+                    decryptTags(journalGetResponse.encryptedTags()), journalGetResponse.createdAt(),
+                    journalGetResponse.updatedAt(), journalGetResponse.visibleAfter(), journalGetResponse.expiresAt()));
+        }
+
+        return decryptedJournalGetResponseList;
     }
 
     private EncryptedPayload encryptField(String input) {

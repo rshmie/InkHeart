@@ -1,6 +1,5 @@
 package io.inkHeart.cli.commad;
 
-import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
 import io.inkHeart.cli.dto.DecryptedJournalEntryResponse;
 import io.inkHeart.cli.dto.DecryptedJournalGetResponse;
 import io.inkHeart.cli.service.JournalService;
@@ -8,10 +7,10 @@ import io.inkHeart.cli.util.CLIMenu;
 import io.inkHeart.cli.util.MessagePrinter;
 
 import javax.crypto.SecretKey;
+import java.io.IOException;
 import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
@@ -59,7 +58,7 @@ public class InteractiveJournalUserSession {
                     handleListingEntriesWithinTheTimeRange();
                     break;
                 case "3":
-                    MessagePrinter.info("Full-Text Search - Not implemented yet.");
+                    handleSearchWithinYourJournal();
                     break;
                 case "4":
                     // Go back to the previous menu
@@ -70,6 +69,28 @@ public class InteractiveJournalUserSession {
                     MessagePrinter.error("Invalid option.");
                     break;
             }
+        }
+    }
+
+    private void handleSearchWithinYourJournal() {
+        try {
+            MessagePrinter.info("Search your journal entries by tag, mood, or content");
+            MessagePrinter.prompt("Tag: ");
+            String tag = scanner.nextLine().trim();
+            MessagePrinter.prompt("Mood: ");
+            String mood = scanner.nextLine().trim();
+            MessagePrinter.prompt("Keyword or phrase: ");
+            String content = scanner.nextLine().trim();
+
+            List<DecryptedJournalEntryResponse> searchedEntryResultList = journalService.searchEntries(tag, mood, content);
+            if (searchedEntryResultList == null || searchedEntryResultList.isEmpty()) {
+                MessagePrinter.info("No journal entries found for the provided tag, mood, or content.");
+                return;
+            }
+            CLIMenu.showJournalEntriesTable(searchedEntryResultList);
+            handleEntryActions();
+        } catch (IOException | InterruptedException e) {
+            MessagePrinter.error("Could not get your journal entries: " + e.getMessage());
         }
     }
 
@@ -98,7 +119,7 @@ public class InteractiveJournalUserSession {
 
             List<DecryptedJournalEntryResponse> entries = journalService.listEntriesWithinRange(fromDate, toDate);
             if (entries.isEmpty()) {
-                MessagePrinter.info("No journal entries found in this time range.");
+                MessagePrinter.info("No journal entries found in this time range!");
                 return;
             }
 
@@ -128,7 +149,7 @@ public class InteractiveJournalUserSession {
             List<DecryptedJournalEntryResponse> entries = journalService.listRecentUserEntries();
 
             if (entries.isEmpty()) {
-                MessagePrinter.info("No journal entries found.");
+                MessagePrinter.info("No journal entries found!");
                 return; // Go back to the sub-menu
             }
             CLIMenu.showJournalEntriesTable(entries);
