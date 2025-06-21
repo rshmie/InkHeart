@@ -86,7 +86,7 @@ public class JournalEntryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<JournalEntryResponse>> getEntriesInDateRange(
+    public ResponseEntity<List<JournalEntryResponse>> getEntriesBetweenDateRange(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("from") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") LocalDateTime from,
             @RequestParam("to") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm") LocalDateTime to) {
