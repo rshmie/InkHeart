@@ -255,13 +255,18 @@ public class JournalService {
         Set<Long> seenIds = new HashSet<>();
         List<DecryptedJournalEntryResponse> searchResult = new ArrayList<>();
         for (DecryptedJournalGetResponse entry : decryptedEntryList) {
-            boolean match = tag != null && !tag.isBlank() && entry.decryptedTags().stream().anyMatch(t -> t.equalsIgnoreCase(tag));
+            boolean match = false;
 
-            if (mood != null && !mood.isBlank() && entry.decryptedMood().equalsIgnoreCase(mood)) {
-                match = true;
+            if (tag != null && !tag.isBlank() && entry.decryptedTags() != null) {
+                match |= entry.decryptedTags().stream().anyMatch(t -> t != null && t.equalsIgnoreCase(tag));
             }
-            if (content != null && !content.isBlank() && entry.decryptedContent().toLowerCase().contains(content.toLowerCase())) {
-                match = true;
+
+            if (mood != null && !mood.isBlank() && entry.decryptedMood() != null) {
+                match |= entry.decryptedMood().equalsIgnoreCase(mood);
+            }
+
+            if (content != null && !content.isBlank() && entry.decryptedContent() != null) {
+                match |= entry.decryptedContent().toLowerCase().contains(content.toLowerCase());
             }
 
             if (match && !seenIds.contains(entry.id())) {

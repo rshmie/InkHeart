@@ -25,8 +25,11 @@ public class LoginCommand implements Callable<Integer> {
         }
 
         MessagePrinter.prompt("Enter your master password:");
-        char[] passwordChars = readPasswordSafe(scanner);
-        if (passwordChars == null) return 1;
+        char[] passwordChars = RegisterCommand.readPasswordSafe(scanner);
+        if (passwordChars == null) {
+            MessagePrinter.error("Could not read your password.");
+            return 1;
+        }
         String password = new String(passwordChars);
 
         MessagePrinter.info("Initialising secure login...");
@@ -57,17 +60,6 @@ public class LoginCommand implements Callable<Integer> {
             return 1;
         }
         return 0;
-    }
-
-    private char[] readPasswordSafe(Scanner scanner) {
-        char[] password = System.console() != null
-                ? System.console().readPassword()
-                : scanner.nextLine().toCharArray();
-        if (password.length == 0) {
-            MessagePrinter.error("Could not read password.");
-            return null;
-        }
-        return password;
     }
 }
 

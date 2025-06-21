@@ -6,6 +6,7 @@ import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
@@ -27,11 +28,14 @@ public class RegisterCommand implements Callable<Integer> {
 
         MessagePrinter.prompt("Choose a strong password:");
         char[] passwordChars = readPasswordSafe(scanner);
-        if (passwordChars == null) return 1;
+        if (passwordChars == null) {
+            MessagePrinter.error("Could not read your password.");
+            return 1;
+        }
 
         MessagePrinter.prompt("Confirm password:");
         char[] confirmPasswordChars = readPasswordSafe(scanner);
-        if (!java.util.Arrays.equals(passwordChars, confirmPasswordChars)) {
+        if (!Arrays.equals(passwordChars, confirmPasswordChars)) {
             MessagePrinter.error("Passwords do not match. Please try again.");
             return 1;
         }
@@ -61,12 +65,11 @@ public class RegisterCommand implements Callable<Integer> {
         return 0;
     }
 
-    private char[] readPasswordSafe(Scanner scanner) {
+    public static char[] readPasswordSafe(Scanner scanner) {
         char[] password = System.console() != null
                 ? System.console().readPassword()
                 : scanner.nextLine().toCharArray();
         if (password.length == 0) {
-            MessagePrinter.error("Could not read password.");
             return null;
         }
         return password;

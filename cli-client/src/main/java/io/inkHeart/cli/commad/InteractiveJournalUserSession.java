@@ -74,7 +74,7 @@ public class InteractiveJournalUserSession {
 
     private void handleSearchWithinYourJournal() {
         try {
-            MessagePrinter.info("Search your journal entries by tag, mood, or content");
+            MessagePrinter.info("Search your journal entries by tag, mood, or keyword (all fields optional):");
             MessagePrinter.prompt("Tag: ");
             String tag = scanner.nextLine().trim();
             MessagePrinter.prompt("Mood: ");
@@ -84,7 +84,7 @@ public class InteractiveJournalUserSession {
 
             List<DecryptedJournalEntryResponse> searchedEntryResultList = journalService.searchEntries(tag, mood, content);
             if (searchedEntryResultList == null || searchedEntryResultList.isEmpty()) {
-                MessagePrinter.info("No journal entries found for the provided tag, mood, or content.");
+                MessagePrinter.info("\nNo journal entries found for the provided tag, mood, or content.");
                 return;
             }
             CLIMenu.showJournalEntriesTable(searchedEntryResultList);
@@ -99,6 +99,7 @@ public class InteractiveJournalUserSession {
             MessagePrinter.info("Please enter the date range.");
             MessagePrinter.info("Format: yyyy-MM-dd HH:mm or yyyy-MM-dd (e.g., 2025-06-01 05:00 or 2025-06-01)");
 
+            System.out.println();
             MessagePrinter.prompt("From: ");
             String fromStr = scanner.nextLine().trim();
             MessagePrinter.prompt("To: ");

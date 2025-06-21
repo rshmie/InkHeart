@@ -81,7 +81,7 @@ public class CLIMenu {
         MessagePrinter.divider();
 
         for (DecryptedJournalEntryResponse entry : entries) {
-            System.out.printf("%-5d | %-25s | %-25s | %-25s%n", entry.id(), truncate(entry.title(), 25), entry.createdAt().format(INPUT_DATE_TIME_FORMATTER), entry.updatedAt().format(INPUT_DATE_TIME_FORMATTER));
+            System.out.printf("%-5d | %-30s | %-25s | %-25s%n", entry.id(), truncate(entry.title(), 25), entry.createdAt().format(INPUT_DATE_TIME_FORMATTER), entry.updatedAt().format(INPUT_DATE_TIME_FORMATTER));
         }
 
         MessagePrinter.divider();
@@ -122,9 +122,13 @@ public class CLIMenu {
         MessagePrinter.prompt("Title: ");
         String title = scanner.nextLine();
 
-        MessagePrinter.prompt("Content: ");
-        System.out.println();
-        String content = scanner.nextLine();
+        MessagePrinter.prompt("Content (type '::done' to finish): ");
+        StringBuilder contentBuilder = new StringBuilder();
+        String line;
+        while (!(line = scanner.nextLine()).equalsIgnoreCase("::done")) {
+            contentBuilder.append(line).append(System.lineSeparator());
+        }
+        String content = contentBuilder.toString().trim();
         System.out.println();
 
         MessagePrinter.prompt("Mood (optional): ");
