@@ -9,8 +9,8 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>backend</artifactId>
-	<name>inkHeart-backend</name>
+	<artifactId>inkHeart-backend</artifactId>
+	<name>inkHeart-backend-server</name>
 	<description>Backend module for InkHeart</description>
 
 	<properties>
