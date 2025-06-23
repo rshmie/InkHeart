@@ -34,18 +34,15 @@ class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
-    // Use static fields to share state between ordered tests
     private static final String TEST_EMAIL = "testuser@example.com";
     private static final String TEST_PASSWORD = "my-strong-password-123";
 
     @Test
     @Order(1)
     void testRegisterUser() throws Exception {
-        // --- Test-side Client Logic (for registration) ---
+        // Test-side Client Logic (for registration)
         SRP6CryptoParams cryptoParams = SRP6CryptoParams.getInstance(2048, "SHA-256");
         SRP6VerifierGenerator verifierGenerator = new SRP6VerifierGenerator(cryptoParams);
         byte[] salt = verifierGenerator.generateRandomSalt();
@@ -66,7 +63,7 @@ class AuthControllerTest {
     @Test
     @Order(2)
     void testFullLoginFlow() throws Exception {
-        // --- STEP 1: LOGIN CHALLENGE ---
+        // LOGIN CHALLENGE
         LoginChallengeRequest challengeRequest = new LoginChallengeRequest();
         challengeRequest.setEmail(TEST_EMAIL);
 
@@ -82,7 +79,7 @@ class AuthControllerTest {
         BigInteger salt = new BigInteger(1, Base64.getDecoder().decode(challengeResponse.getSalt()));
         BigInteger serverPublicKeyB = new BigInteger(1, Base64.getDecoder().decode(challengeResponse.getServerPublicKeyB()));
 
-        // --- Test-side Client Logic (SRP calculations) ---
+        // Test-side Client Logic (SRP calculations)
         SRP6CryptoParams cryptoParams = SRP6CryptoParams.getInstance(2048, "SHA-256");
         SRP6ClientSession clientSession = new SRP6ClientSession();
         clientSession.step1(TEST_EMAIL, TEST_PASSWORD);
@@ -94,7 +91,7 @@ class AuthControllerTest {
         BigInteger clientProofM1 = clientSession.getClientEvidenceMessage();
 
 
-        // --- STEP 2: LOGIN VERIFY ---
+        // LOGIN VERIFY
         LoginVerifyRequest verifyRequest = new LoginVerifyRequest();
         verifyRequest.setEmail(TEST_EMAIL);
         verifyRequest.setClientPublicKey(Base64.getEncoder().encodeToString(clientPublicKeyA.toByteArray()));

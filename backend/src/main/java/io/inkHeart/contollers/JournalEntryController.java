@@ -3,6 +3,9 @@ package io.inkHeart.contollers;
 import io.inkHeart.dto.*;
 import io.inkHeart.entity.CustomUserDetails;
 import io.inkHeart.service.JournalService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,28 +17,18 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/*
-POST /api/journal/entry or POST /api/journal
-
-GET /api/journal/entry/{id} ← For read
-
-GET /api/journal ← For list
-
-DELETE /api/journal/entry/{id} ← Delete
-
-PUT /api/journal/entry/{id} ← Edit
- */
 @RestController
 @RequestMapping("/api/journal")
 @Validated
 public class JournalEntryController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JournalEntryController.class);
     private final JournalService journalService;
     public JournalEntryController(JournalService journalService) {
         this.journalService = journalService;
     }
 
     @PostMapping("/create")
-    public ResponseEntity<JournalEntryResponse> create(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody CreateJournalEntryRequest request) {
+    public ResponseEntity<JournalEntryResponse> create(@AuthenticationPrincipal CustomUserDetails userDetails, @Valid @RequestBody CreateJournalEntryRequest request) {
         var savedEntry = journalService.createEntry(userDetails.getUser(), request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -50,7 +43,7 @@ public class JournalEntryController {
                 savedEntry.getUpdatedAt()
         );
 
-        System.out.println("Post journal create done : " + response.id());
+        LOGGER.info("Journal entry created with id: {} ", savedEntry.getId());
         return ResponseEntity.created(location).body(response);
     }
 
@@ -80,7 +73,7 @@ public class JournalEntryController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<JournalEntryResponse> updateJournalEntryById(@AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable("id") Long id, @RequestBody UpdateJournalEntryRequest request) {
+            @PathVariable("id") Long id, @Valid @RequestBody UpdateJournalEntryRequest request) {
         JournalEntryResponse updated = journalService.updateJournalEntryById(userDetails.getUser(), id, request);
         return ResponseEntity.ok().body(updated);
     }
@@ -94,32 +87,4 @@ public class JournalEntryController {
         List<JournalEntryResponse> entriesBetweenRange = journalService.getJournalEntriesBetweenRange(userDetails.getUser(), from, to);
         return ResponseEntity.ok().body(entriesBetweenRange);
     }
-
-
-//    @GetMapping("entry/{id}")@AuthenticationPrincipal CustomUserDetails userDetails
-//    public JournalEntryResponse getJournalEntryByID() {
-//
-//    }
-
-//    @GetMapping
-//    public List<JournalEntryResponse> getJournalEntries(@AuthenticationPrincipal CustomUserDetails userDetails) {
-//        System.out.println("Saving journal for: " + userDetails.getUsername());
-//        return journalService.getJournalEntries(userDetails.getUsername());
-//    }
-//    @GetMapping("/entries")
-//    public List<JournalEntryResponse> getEntries(@AuthenticationPrincipal CustomUserDetails userDetails) {
-//        return journalService.getVisibleEntries(userDetails.getUser());
-//    }
-
-    /*
-    deleteEntryById()
-
-    updateEntry()
-
-    getEntryById()
-
-    searchEntriesByTag()
-
-    getTimeLockedOrExpiredEntries()
-     */
 }

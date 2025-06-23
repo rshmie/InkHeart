@@ -6,6 +6,7 @@ import com.nimbusds.srp6.SRP6ServerSession;
 import io.inkHeart.dto.LoginVerifyRequest;
 import io.inkHeart.entity.User;
 import io.inkHeart.exception.EmailAlreadyExistException;
+import io.inkHeart.exception.EmailNotFoundException;
 import io.inkHeart.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ public class AuthService {
 
     public SRP6ServerSession startLoginChallenge(String email) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+                .orElseThrow(() -> new EmailNotFoundException(email));
 
         byte[] saltBytes = user.getSrpSalt();
         byte[] verifierBytes = user.getSrpVerifier();
@@ -58,10 +59,11 @@ public class AuthService {
     }
 
     public SRP6ServerSession verifyLogin(LoginVerifyRequest verifyRequest) throws SRP6Exception {
-        userRepository.findByEmail(verifyRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+        String email = verifyRequest.getEmail();
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new EmailNotFoundException(email));
 
-        SRP6ServerSession serverSession = srpSessionsMap.get(verifyRequest.getEmail());
+        SRP6ServerSession serverSession = srpSessionsMap.get(email);
         if (serverSession == null) {
             return null;
         }

@@ -62,9 +62,9 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new FinalLoginResponse(null, null, "Login Failed! Please check your password"));
         }
 
-        // Client is authenticated successfully
+        /* Get the proof M2 once client is authenticated successfully and clean the session */
         String serverProofM2 = Base64.getEncoder().encodeToString(srpServerSession.getServerEvidenceMessage().toByteArray());
-        authService.getSrpSessionsMap().remove(loginVerifyRequest.getEmail()); // Clean the session
+        authService.getSrpSessionsMap().remove(loginVerifyRequest.getEmail());
 
         String jwtToken = jwtUtil.generateToken(loginVerifyRequest.getEmail());
         return ResponseEntity.ok(new FinalLoginResponse(serverProofM2, jwtToken, "Client is authenticated successfully"));

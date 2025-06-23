@@ -13,7 +13,7 @@ import java.util.Optional;
 @Transactional
 public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long> {
     // Belong to the user which are now visible after visibleAfter timestamp
-    List<JournalEntry> findByUserAndCreatedAtBeforeAndVisibleAfterBefore(User user, LocalDateTime now1, LocalDateTime now2);
+    List<JournalEntry> findByUserAndVisibleAfterBefore(User user, LocalDateTime now);
     List<JournalEntry> findAllByUserEmail(String userName);
     List<JournalEntryResponse> findTop10ByUserOrderByCreatedAtDesc(User user);
     Optional<JournalEntry> findByIdAndUser(Long id, User user);
