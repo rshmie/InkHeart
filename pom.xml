@@ -9,8 +9,8 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>backend</module>
-        <module>cli-client</module>
+        <module>inkHeart-backend</module>
+        <module>inkHeart-cli</module>
     </modules>
 
     <properties>
