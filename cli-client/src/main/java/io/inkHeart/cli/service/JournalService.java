@@ -35,6 +35,9 @@ public class JournalService {
         this.scanner = scanner;
     }
 
+    /**
+     * Create a new journal entry
+     */
     public void createEntry() {
         CreateEntryPromptResult result = CLIMenu.getCreateEntryPromptResult(this.scanner);
         try {
@@ -80,6 +83,11 @@ public class JournalService {
         }
     }
 
+    /**
+     * Lists all the journal entries within the specified time range
+     * @param fromDate - Start date
+     * @param toDate - End date
+     */
     public List<DecryptedJournalEntryResponse> listEntriesWithinRange(LocalDateTime fromDate, LocalDateTime toDate) {
         try {
             String url = JOURNAL_BASE_URl + "?from=" + fromDate + "&to=" + toDate;
@@ -107,7 +115,6 @@ public class JournalService {
 
     /**
      * Lists the recent 10 entries, ordered by createdAt time (DESC)
-     *
      */
     public List<DecryptedJournalEntryResponse> listRecentUserEntries() {
         try {
@@ -171,6 +178,11 @@ public class JournalService {
                 journalGetResponse.updatedAt(), journalGetResponse.visibleAfter(), journalGetResponse.expiresAt());
     }
 
+    /**
+     * Deletes the journal entry with the specified ID
+     * @param id Journal Entry ID
+     * @return Decrypted Journal Entry
+     */
     public DecryptedJournalEntryResponse deleteEntry(Long id) throws IOException, InterruptedException {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(JOURNAL_BASE_URl + "/" + id))
@@ -195,6 +207,11 @@ public class JournalService {
                 journalDeleteResponse.createdAt(), journalDeleteResponse.updatedAt());
     }
 
+    /**
+     * Edits the journal entry with the specified ID with edited contents and sends the PATCH to the backend
+     * @param id - Journal entry ID
+     * @return Decrypted Journal Entry
+     */
     public DecryptedJournalEntryResponse editEntry(Long id) throws IOException, InterruptedException {
         // Get a journal entry
         DecryptedJournalGetResponse originalEntry = viewEntry(id);
@@ -246,6 +263,10 @@ public class JournalService {
         return new DecryptedJournalEntryResponse(journalEditResponse.id(), decryptContent(journalEditResponse.encryptedTitle()),
                 journalEditResponse.createdAt(), journalEditResponse.updatedAt());
     }
+
+    /**
+     * Search across the user's journal entry by tag, mood or by keyword/phrase
+     */
     public List<DecryptedJournalEntryResponse> searchEntries(String tag, String mood, String content) throws IOException, InterruptedException {
         List<DecryptedJournalGetResponse> decryptedEntryList = getAllTheJournalEntries();
         if (decryptedEntryList == null || decryptedEntryList.isEmpty()) {
@@ -277,7 +298,10 @@ public class JournalService {
         return searchResult;
     }
 
-    private List<DecryptedJournalGetResponse> getAllTheJournalEntries() throws IOException, InterruptedException {
+    /**
+     * Get all the journal entries of the user
+     */
+    List<DecryptedJournalGetResponse> getAllTheJournalEntries() throws IOException, InterruptedException {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(JOURNAL_BASE_URl + "/entries"))
                 .header("Authorization", "Bearer " + this.jwtToken)
@@ -320,7 +344,7 @@ public class JournalService {
         }
     }
 
-    private String decryptContent(EncryptedPayload encryptedPayload) {
+    String decryptContent(EncryptedPayload encryptedPayload) {
         if (checkNull(encryptedPayload) == null) {
             return null;
         }

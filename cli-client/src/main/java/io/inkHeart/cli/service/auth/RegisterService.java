@@ -15,17 +15,23 @@ import java.util.Base64;
 import static io.inkHeart.cli.CliApplication.API_URL;
 
 public class RegisterService {
+    private final HttpClient httpClient;
+
+    public RegisterService(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
     public HttpResponse<String> handleSignUp(String email, String password) throws IOException, InterruptedException {
-        // 1. Get the standard crypto parameters (must be same on client and server)
+        // Get the standard crypto parameters (must be same on client and server)
         SRP6CryptoParams cryptoParams = SRP6CryptoParams.getInstance(2048, "SHA-256");
 
-        // 2. Create a verifier generator - To Do: Use the custom hash function for the verifier later.
+        // Create a verifier generator - To Do: Use the custom hash function for the verifie.
         SRP6VerifierGenerator verifierGenerator = new SRP6VerifierGenerator(cryptoParams);
 
-        // 3. Generate Random Salt on the client.
-        byte[] salt =  verifierGenerator.generateRandomSalt();
-        // 4. Generate password verifier "v" and Encode salt and verifier into base64
-        // v= g^hash(salt, identity, password) mod N
+        // Generate Random Salt on the client.
+        byte[] salt = verifierGenerator.generateRandomSalt();
+
+        /* Generate password verifier "v" and Encode salt and verifier into base64
+            v = g^hash(salt, identity, password) mod N */
         var verifier = verifierGenerator.generateVerifier(salt, email.getBytes(StandardCharsets.UTF_8), password.getBytes(StandardCharsets.UTF_8));
         String saltBase64 = Base64.getEncoder().encodeToString(salt);
         String verifierBase64 = Base64.getEncoder().encodeToString(verifier.toByteArray());
@@ -43,7 +49,7 @@ public class RegisterService {
                 .POST(HttpRequest.BodyPublishers.ofString(registerBody))
                 .build();
 
-        return HttpClient.newBuilder().build().send(registerRequest, HttpResponse.BodyHandlers.ofString());
+        return this.httpClient.send(registerRequest, HttpResponse.BodyHandlers.ofString());
 
     }
 }

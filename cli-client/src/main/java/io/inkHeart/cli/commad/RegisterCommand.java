@@ -1,11 +1,13 @@
 package io.inkHeart.cli.commad;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.inkHeart.cli.service.auth.RegisterService;
 import io.inkHeart.cli.util.JsonUtil;
 import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.net.http.HttpClient;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
@@ -43,13 +45,13 @@ public class RegisterCommand implements Callable<Integer> {
         MessagePrinter.info("Registering account for " + email + "...");
 
         try {
-            var response = new RegisterService().handleSignUp(email, new String(passwordChars));
+            var response = new RegisterService(HttpClient.newHttpClient()).handleSignUp(email, new String(passwordChars));
             if (response.statusCode() == 201) {
                 MessagePrinter.success("Account created successfully! You can now log in.");
             } else {
                 String errorMessage;
                 try {
-                    Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), Map.class);
+                    Map<String, String> errorMap = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<>() {});
                     errorMessage = errorMap.getOrDefault("error", "Registration failed!");
                 } catch (Exception ex) {
                     errorMessage = "Registration failed. Status :" + response.statusCode();

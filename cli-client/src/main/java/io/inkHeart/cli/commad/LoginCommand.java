@@ -6,6 +6,7 @@ import io.inkHeart.cli.dto.FinalLoginResponse;
 import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;
 
+import java.net.http.HttpClient;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
@@ -36,7 +37,7 @@ public class LoginCommand implements Callable<Integer> {
 
         FinalLoginResponse loginResponse;
         try {
-            loginResponse = new LoginService().handleLogin(email, password);
+            loginResponse = new LoginService(HttpClient.newHttpClient()).handleLogin(email, password);
             if (loginResponse.jwtToken().isEmpty()) {
                 MessagePrinter.error("Login failed. Please check your credentials and try again.");
                 return 1;

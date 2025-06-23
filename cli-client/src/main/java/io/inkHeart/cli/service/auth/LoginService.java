@@ -20,6 +20,12 @@ import java.util.Base64;
 import static io.inkHeart.cli.CliApplication.API_URL;
 
 public class LoginService {
+
+    private final HttpClient httpClient;
+
+    public LoginService(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
     public FinalLoginResponse handleLogin(String email, String password) throws IOException, InterruptedException {
         var loginChallengeResponse = getLoginChallengeResponse(email);
         if (loginChallengeResponse == null) {
@@ -42,7 +48,7 @@ public class LoginService {
      * @param email - User ID used to log in
      * @return LoginChallengeResponse consisting of salt and server's Public Key Value B
      */
-    private static LoginChallengeResponse getLoginChallengeResponse(String email) throws IOException, InterruptedException {
+    LoginChallengeResponse getLoginChallengeResponse(String email) throws IOException, InterruptedException {
         String challengeRequestJson = "{\"email\":\"" + email + "\"}";
 
         HttpRequest challengeHttpRequest = HttpRequest.newBuilder()
@@ -52,7 +58,7 @@ public class LoginService {
                 .build();
 
         // Send the request and get the response
-        var challengeResponse = HttpClient.newBuilder().build().send(challengeHttpRequest,
+        var challengeResponse = this.httpClient.send(challengeHttpRequest,
                 HttpResponse.BodyHandlers.ofString());
         if (challengeResponse.statusCode() != 200) {
             return null;
@@ -69,11 +75,11 @@ public class LoginService {
      * @return FinalLoginResponse consisting of Server's proof M2 and JWT token upon successful verification from the server.
 
      * Client sends the requests to /login/verify once the challenge succeeds. It sends it's public Key,
-     * and it's computed proof M1 to the server and server and server verifies it and upon success server sends back
+     * and it's computed proof M1 to the server and server verifies it. Upon the success verification, server sends back
      * the response with its proof M2 and JWT token
      *
      */
-    private static FinalLoginResponse getLoginVerifyResponse(String email, String password, byte[] salt, BigInteger serverPublicKeyB) throws IOException, InterruptedException {
+    FinalLoginResponse getLoginVerifyResponse(String email, String password, byte[] salt, BigInteger serverPublicKeyB) throws IOException, InterruptedException {
         SRP6CryptoParams cryptoParams = SRP6CryptoParams.getInstance(2048, "SHA-256");
         SRP6ClientSession clientSession = new SRP6ClientSession();
         clientSession.step1(email, password);
@@ -101,11 +107,10 @@ public class LoginService {
                 .POST(HttpRequest.BodyPublishers.ofString(verifyRequest))
                 .build();
 
-        var loginVerifyResponse = HttpClient.newBuilder().build().send(verifyHttpRequest, HttpResponse.BodyHandlers.ofString());
+        var loginVerifyResponse = this.httpClient.send(verifyHttpRequest, HttpResponse.BodyHandlers.ofString());
         if (loginVerifyResponse.statusCode() != 200) {
             return new FinalLoginResponse("", "", "Login failed, Please check your password! Server returned with code: " + loginVerifyResponse.statusCode());
         }
         return JsonUtil.getObjectMapper().readValue(loginVerifyResponse.body(), FinalLoginResponse.class);
-
     }
 }
