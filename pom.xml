@@ -31,12 +31,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Shared third-party dependencies -->
-            <dependency>
-                <groupId>de.mkammerer</groupId>
-                <artifactId>argon2-jvm</artifactId>
-                <version>2.12</version>
-            </dependency>
+            <!-- Shared dependencies -->
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>srp6a</artifactId>
