@@ -38,9 +38,6 @@ public class InkHeartCLI implements Runnable {
                     return; // Exit the loop and the application
                 default:
                     MessagePrinter.error("Invalid option. Please try again.");
-                    System.out.println("Press Enter to continue...");
-                    scanner.nextLine(); // pause
-
             }
         }
     }
