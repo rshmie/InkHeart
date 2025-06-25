@@ -9,7 +9,7 @@ Your journal remains yours and yours alone.
 
 Most journaling apps today rely on centralized cloud storage, leaving your personal data vulnerable to breaches and misuse. InkHeart was built for users who demand complete control over their data and privacy.
 
-It’s ideal for:
+It's ideal for:
 -   Personal journaling with absolute privacy.
 -   Secure note-taking (e.g., for therapy notes, health records, or private reflections).
 -   Developers looking to dive deep into zero-knowledge systems or implement strong cryptographic practices.
@@ -85,7 +85,7 @@ Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated E
 * Maven (optional, as the Maven wrapper is included)
 
 **Installation & Build:**
-1.  Clone the repository:
+1.  Clone the repository: (or download the zip)
     ```sh
     git clone [https://github.com/your-username/inkheart.git](https://github.com/your-username/inkheart.git)
     ```
