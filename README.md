@@ -28,7 +28,8 @@ By using the zero-knowledge principle with end-to-end encryption and client-side
 
 ## The Core Principle: Zero Knowledge
 
-In a world where data is a commodity, InkHeart is designed to be a sanctuary. Promise is simple:
+In a world where data is a commodity, InkHeart gives you a private space that's truly yours. 
+The Promise is simple:
 
 > **We know nothing about you or your data.**
 
