@@ -70,7 +70,13 @@ The client derives your unique encryption key from your master password using Ar
 Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated Encryption with Associated Data (AEAD) cipher.
 
 * **Why AES-256-GCM?** It provides confidentiality (your data is secret), integrity, and authenticity (your data cannot be secretly tampered with). It is highly performant and widely adopted in secure applications. A unique 96-bit (12-byte) Initialization Vector (IV) is generated for every single encrypted entry, which is a critical requirement for AES-GCM's security.
-
+* **AAD**: GCM mode of encryption takes an optional field which binds the cipher text to the context, which could essentially be any data that we want to 
+authenticate but not encrypt. This is crucial for ensuring that the context of the ciphertext hasn't been tampered with.
+<br/> Following AAD pattern is used: `AAD = concatenate(Entry_ID, Field_Name)`  (separated by delimiter ":")
+    * Prevents fields swapping within and between entries: Ensures that the encrypted content belongs to that specific entry.
+      If an attacker tries to swap content between EntryA and EntryB, the GCM tag verification would fail because the AAD that we associated it with would be incorrect for the swapped content.
+      This provides integrity across different entries and cannot be successfully decrypted.
+  
 ## Getting Started
 
 **Prerequisites:**
