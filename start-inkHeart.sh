@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Read .env file if it exists
+if [ -f .env ]; then
+  echo "Loading environment variables from .env file..."
+  export $(grep -v '^#' .env | xargs)
+fi
+
+# Check if JWT_SECRET is set
+if [ -z "$JWT_SECRET" ]; then
+    echo "Error: JWT_SECRET environment variable is not set."
+    echo "Please set it before running, or add it to a .env file."
+    exit 1
+fi
+
 echo "### Building the InkHeart Project with the Maven Wrapper..."
 chmod +x ./mvnw
 ./mvnw clean install
