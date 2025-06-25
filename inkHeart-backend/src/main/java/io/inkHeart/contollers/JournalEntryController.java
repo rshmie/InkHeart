@@ -38,6 +38,7 @@ public class JournalEntryController {
         // Create a DTO to send back to the client, excluding sensitive info
         JournalEntryResponse response = new JournalEntryResponse(
                 savedEntry.getId(),
+                savedEntry.getEntryUUID(),
                 new EncryptedPayload(savedEntry.getEncryptedTitle().cipherText(), request.encryptedTitle().iv()),
                 savedEntry.getCreatedAt(),
                 savedEntry.getUpdatedAt()

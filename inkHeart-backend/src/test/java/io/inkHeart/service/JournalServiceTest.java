@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -109,7 +110,7 @@ class JournalServiceTest {
         when(journalEntryRepository.findByIdAndUser(2L, mockUser))
                 .thenReturn(Optional.of(mockEntry));
 
-        UpdateJournalEntryRequest mockUpdateEntry = new UpdateJournalEntryRequest(
+        UpdateJournalEntryRequest mockUpdateEntry = new UpdateJournalEntryRequest(UUID.randomUUID(),
                 new EncryptedPayload("updated-encrypted-title", "title-iv-updated"),
                 new EncryptedPayload("updated-encrypted-content", "content-iv-updated"),
                 null,
@@ -134,7 +135,7 @@ class JournalServiceTest {
     }
 
     private static CreateJournalEntryRequest mockCreateJournalEntry() {
-        return new CreateJournalEntryRequest(
+        return new CreateJournalEntryRequest( UUID.randomUUID(),
                 new EncryptedPayload("encrypted-title", "title-iv"),
                 new EncryptedPayload("encrypted-content", "content-iv"),
                 List.of(new EncryptedPayload("encrypted-tag", "test")),

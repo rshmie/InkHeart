@@ -2,8 +2,10 @@ package io.inkHeart.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record UpdateJournalEntryRequest(
+        UUID entryUUID,
         EncryptedPayload encryptedTitle,
         EncryptedPayload encryptedContent,
         EncryptedPayload encryptedMood,

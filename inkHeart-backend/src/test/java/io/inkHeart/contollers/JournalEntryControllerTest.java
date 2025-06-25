@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -107,7 +108,8 @@ class JournalEntryControllerTest {
 
     @Test
     void testGetJournalEntryByID() throws Exception {
-        JournalGetResponse response = new JournalGetResponse(1L,
+        UUID uuid = UUID.randomUUID();
+        JournalGetResponse response = new JournalGetResponse(1L, uuid,
                 new EncryptedPayload("encrypted-title", "title-iv"),
                 new EncryptedPayload("encrypted-content", "content-iv"),
                 new EncryptedPayload("encrypted-mood", ""),
@@ -150,13 +152,15 @@ class JournalEntryControllerTest {
     }
     @Test
     void testGetAllJournalEntries() throws Exception {
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
         List<JournalGetResponse> responses = List.of(
-                new JournalGetResponse(1L, new EncryptedPayload("title1", "title1-iv"),
+                new JournalGetResponse(1L, uuid1, new EncryptedPayload("title1", "title1-iv"),
                         new EncryptedPayload("content1", "content1-iv"), null,
                                 List.of(new EncryptedPayload("encrypted-tag", "entry1")),
                                 LocalDateTime.now(),
                                 null, null, null),
-                new JournalGetResponse(2L, new EncryptedPayload("title2", "title2-iv"),
+                new JournalGetResponse(2L, uuid2, new EncryptedPayload("title2", "title2-iv"),
                         new EncryptedPayload("content2", "content2-iv"), null,
                         List.of(new EncryptedPayload("encrypted-tag", "entry2")),
                         LocalDateTime.now(),
@@ -177,9 +181,11 @@ class JournalEntryControllerTest {
 
     @Test
     void testGet10RecentEntries() throws Exception {
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
         List<JournalEntryResponse> responses = List.of(
-                new JournalEntryResponse(1L, new EncryptedPayload("Title 1", "iv 1"), LocalDateTime.now(), null),
-                new JournalEntryResponse(2L, new EncryptedPayload("Title 2", "iv 2"), LocalDateTime.now(), LocalDateTime.now().plusDays(10))
+                new JournalEntryResponse(1L, uuid1, new EncryptedPayload("Title 1", "iv 1"), LocalDateTime.now(), null),
+                new JournalEntryResponse(2L, uuid2, new EncryptedPayload("Title 2", "iv 2"), LocalDateTime.now(), LocalDateTime.now().plusDays(10))
         );
 
         when(journalService.get10RecentEntriesForUser(testUser)).thenReturn(responses);
@@ -196,7 +202,8 @@ class JournalEntryControllerTest {
 
     @Test
     void testDeleteJournalEntryById() throws Exception {
-        JournalEntryResponse response = new JournalEntryResponse(1L,
+        UUID uuid = UUID.randomUUID();
+        JournalEntryResponse response = new JournalEntryResponse(1L, uuid,
                 new EncryptedPayload("Deleted Title", "deleted-iv"), LocalDateTime.now(), null);
 
         when(journalService.deleteJournalEntryById(testUser, 1L)).thenReturn(response);
@@ -212,7 +219,8 @@ class JournalEntryControllerTest {
 
     @Test
     void testUpdateJournalEntryById() throws Exception {
-        UpdateJournalEntryRequest updateRequest = new UpdateJournalEntryRequest(
+        UUID uuid = UUID.randomUUID();
+        UpdateJournalEntryRequest updateRequest = new UpdateJournalEntryRequest( uuid,
                 new EncryptedPayload("Updated Title", "updated-iv"),
                 new EncryptedPayload("encrypted-content", "content-iv"),
                 new EncryptedPayload("encrypted-mood", ""),
@@ -221,7 +229,7 @@ class JournalEntryControllerTest {
                 null
         );
 
-        JournalEntryResponse updatedResponse = new JournalEntryResponse(1L,
+        JournalEntryResponse updatedResponse = new JournalEntryResponse(1L, uuid,
                 new EncryptedPayload("Updated Title", "updated-iv"), LocalDateTime.now(), null);
 
         when(journalService.updateJournalEntryById(eq(testUser), eq(1L), any(UpdateJournalEntryRequest.class)))
@@ -239,15 +247,18 @@ class JournalEntryControllerTest {
 
     @Test
     void testGetEntriesBetweenDateRange() throws Exception {
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+        UUID uuid3 = UUID.randomUUID();
         LocalDateTime from = LocalDateTime.of(2025, 6, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2025, 7, 30, 23, 59);
 
         List<JournalEntryResponse> responses = List.of(
-                new JournalEntryResponse(1L, new EncryptedPayload("2025 June Entry", "iv1"),
+                new JournalEntryResponse(1L, uuid1, new EncryptedPayload("2025 June Entry", "iv1"),
                         LocalDateTime.of(2025, 6, 23, 10, 0), null),
-                new JournalEntryResponse(1L, new EncryptedPayload("2025 July Entry", "iv2"),
+                new JournalEntryResponse(2L, uuid2, new EncryptedPayload("2025 July Entry", "iv2"),
                         LocalDateTime.of(2025, 7, 23, 10, 0), null),
-                new JournalEntryResponse(1L, new EncryptedPayload("2025 December Entry", "iv3"),
+                new JournalEntryResponse(3L, uuid3, new EncryptedPayload("2025 December Entry", "iv3"),
                         LocalDateTime.of(2025, 12, 23, 10, 0), null)
         );
 
@@ -265,7 +276,8 @@ class JournalEntryControllerTest {
     }
 
     private static CreateJournalEntryRequest createTestJournalEntryRequest() {
-        return new CreateJournalEntryRequest(
+        UUID uuid1 = UUID.randomUUID();
+        return new CreateJournalEntryRequest( uuid1,
                 new EncryptedPayload("encrypted-title", "title-iv"),
                 new EncryptedPayload("encrypted-content", "content-iv"),
                 List.of(new EncryptedPayload("encrypted-tag", "test")),

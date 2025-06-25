@@ -7,18 +7,15 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-/*
-Why ManyToOne? and by join coloumn does it mean,
-user_id is an foreign key (of Journal Entry) pointed at User table?
-Why have we not specified column annotation for other fields?
-are they not part of JournalEntry table?
-What does the tag and mood significance here?
- */
+import java.util.UUID;
+
 @Entity
 public class JournalEntry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true, nullable = false, updatable = false)
+    private UUID entryUUID; // The client-generated, security-focused ID.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name= "user_id")
     private User user;
@@ -43,6 +40,9 @@ public class JournalEntry {
     private LocalDateTime expiresAt;
     public Long getId() {
         return id;
+    }
+    public UUID getEntryUUID() {
+        return entryUUID;
     }
 
     public User getUser() {
@@ -83,6 +83,9 @@ public class JournalEntry {
     public void setId(Long id) {
         this.id = id;
     }
+    public void setEntryUUID(UUID entryUUID) {
+        this.entryUUID = entryUUID;
+    }
 
     public void setUser(User user) {
         this.user = user;
@@ -119,16 +122,16 @@ public class JournalEntry {
     public void setExpiresAt(LocalDateTime expiresAt) {
         this.expiresAt = expiresAt;
     }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof JournalEntry that)) return false;
-        return Objects.equals(getId(), that.getId()) && Objects.equals(getUser(), that.getUser()) && Objects.equals(getEncryptedTitle(), that.getEncryptedTitle()) && Objects.equals(getEncryptedContent(), that.getEncryptedContent()) && Objects.equals(getEncryptedMood(), that.getEncryptedMood()) && Objects.equals(getEncryptedTags(), that.getEncryptedTags()) && Objects.equals(getCreatedAt(), that.getCreatedAt()) && Objects.equals(getUpdatedAt(), that.getUpdatedAt()) && Objects.equals(getVisibleAfter(), that.getVisibleAfter()) && Objects.equals(getExpiresAt(), that.getExpiresAt());
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getEntryUUID(), that.getEntryUUID()) && Objects.equals(getUser(), that.getUser()) && Objects.equals(getEncryptedTitle(), that.getEncryptedTitle()) && Objects.equals(getEncryptedContent(), that.getEncryptedContent()) && Objects.equals(getEncryptedMood(), that.getEncryptedMood()) && Objects.equals(getEncryptedTags(), that.getEncryptedTags()) && Objects.equals(getCreatedAt(), that.getCreatedAt()) && Objects.equals(getUpdatedAt(), that.getUpdatedAt()) && Objects.equals(getVisibleAfter(), that.getVisibleAfter()) && Objects.equals(getExpiresAt(), that.getExpiresAt());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getUser(), getEncryptedTitle(), getEncryptedContent(), getEncryptedMood(), getEncryptedTags(), getCreatedAt(), getUpdatedAt(), getVisibleAfter(), getExpiresAt());
+        return Objects.hash(getId(), getEntryUUID(), getUser(), getEncryptedTitle(), getEncryptedContent(), getEncryptedMood(), getEncryptedTags(), getCreatedAt(), getUpdatedAt(), getVisibleAfter(), getExpiresAt());
     }
+
 }

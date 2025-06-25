@@ -22,14 +22,15 @@ public class JournalService {
     public JournalEntry createEntry(User user, CreateJournalEntryRequest request) {
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setUser(user);
+        journalEntry.setEntryUUID(request.entryUUID());
         journalEntry.setEncryptedTitle(new EncryptedPayload(request.encryptedTitle().cipherText(), request.encryptedTitle().iv()));
         journalEntry.setEncryptedContent(new EncryptedPayload(request.encryptedContent().cipherText(), request.encryptedContent().iv()));
         journalEntry.setEncryptedMood(checkNull(request.encryptedMood()));
         journalEntry.setEncryptedTags(getEncryptedTagList(request.encryptedTags()));
-        journalEntry.setVisibleAfter(request.visibleAfter());
-        journalEntry.setExpiresAt(request.expiresAt());
         journalEntry.setCreatedAt(LocalDateTime.now());
         journalEntry.setUpdatedAt(LocalDateTime.now());
+        journalEntry.setVisibleAfter(request.visibleAfter());
+        journalEntry.setExpiresAt(request.expiresAt());
 
         journalEntryRepository.save(journalEntry);
         return journalEntry;
@@ -44,7 +45,7 @@ public class JournalService {
     public List<JournalEntryResponse> get10RecentEntriesForUser(User user) {
         return journalEntryRepository.findTop10ByUserOrderByCreatedAtDesc(user)
                 .stream()
-                .map(entry -> new JournalEntryResponse(entry.id(), entry.encryptedTitle(), entry.createdAt(), entry.updatedAt()))
+                .map(entry -> new JournalEntryResponse(entry.id(), entry.entryUUID(), entry.encryptedTitle(), entry.createdAt(), entry.updatedAt()))
                 .collect(Collectors.toList());
     }
 
@@ -57,7 +58,7 @@ public class JournalService {
         JournalEntry journalEntry = journalEntryRepository.findByIdAndUser(journalEntryId, user)
                 .orElseThrow(() -> new NoJournalEntryFoundException(journalEntryId));
         journalEntryRepository.delete(journalEntry);
-        return new JournalEntryResponse(journalEntry.getId(), journalEntry.getEncryptedTitle(), journalEntry.getCreatedAt(), journalEntry.getUpdatedAt());
+        return new JournalEntryResponse(journalEntry.getId(), journalEntry.getEntryUUID(), journalEntry.getEncryptedTitle(), journalEntry.getCreatedAt(), journalEntry.getUpdatedAt());
     }
 
     public JournalEntryResponse updateJournalEntryById(User user, Long journalEntryId, UpdateJournalEntryRequest request) {
@@ -91,13 +92,13 @@ public class JournalService {
         journalEntry.setUpdatedAt(LocalDateTime.now());
         journalEntryRepository.save(journalEntry);
 
-        return new JournalEntryResponse(journalEntry.getId(), journalEntry.getEncryptedTitle(), journalEntry.getCreatedAt(), journalEntry.getUpdatedAt());
+        return new JournalEntryResponse(journalEntry.getId(), journalEntry.getEntryUUID(), journalEntry.getEncryptedTitle(), journalEntry.getCreatedAt(), journalEntry.getUpdatedAt());
     }
 
 
     public List<JournalEntryResponse> getJournalEntriesBetweenRange(User user, LocalDateTime from, LocalDateTime to) {
         return journalEntryRepository.findAllByUserAndCreatedAtBetween(user, from, to)
-                .stream().map(entry -> new JournalEntryResponse(entry.getId(), entry.getEncryptedTitle(),
+                .stream().map(entry -> new JournalEntryResponse(entry.getId(), entry.getEntryUUID(), entry.getEncryptedTitle(),
                         entry.getCreatedAt(), entry.getUpdatedAt()))
                 .collect(Collectors.toList());
     }
@@ -111,7 +112,7 @@ public class JournalService {
     }
 
     private JournalGetResponse mapToResponse(JournalEntry entry) {
-        return new JournalGetResponse(entry.getId(),
+        return new JournalGetResponse(entry.getId(), entry.getEntryUUID(),
                 new EncryptedPayload(entry.getEncryptedTitle().cipherText(), entry.getEncryptedTitle().iv()),
                 new EncryptedPayload(entry.getEncryptedContent().cipherText(), entry.getEncryptedContent().iv()),
                 checkNull(entry.getEncryptedMood()),
