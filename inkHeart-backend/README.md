@@ -1,3 +1,3 @@
 # InkHeart - Backend Module
 
-Java Spring Boot application (core APIs + encryption)
+Java Spring Boot application (core Restful APIs + spring security)
