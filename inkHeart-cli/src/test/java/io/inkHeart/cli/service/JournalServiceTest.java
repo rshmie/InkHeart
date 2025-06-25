@@ -16,6 +16,7 @@ import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,8 +43,9 @@ class JournalServiceTest {
 
     @Test
     void testListRecentUserEntriesReturnsDecryptedEntries() throws Exception {
+        UUID uuid = UUID.randomUUID();
         List<JournalEntryResponse> mockResponseList = List.of(
-                new JournalEntryResponse(1L, new EncryptedPayload("cipher", "iv"),
+                new JournalEntryResponse(1L, uuid, new EncryptedPayload("cipher", "iv"),
                         LocalDateTime.now(), LocalDateTime.now())
         );
 
@@ -55,7 +57,7 @@ class JournalServiceTest {
         when(httpResponse.body()).thenReturn(json);
 
         JournalService spyService = Mockito.spy(journalService);
-        doReturn("Decrypted Title").when(spyService).decryptContent(any());
+        doReturn("Decrypted Title").when(spyService).decryptContent(any(), any(), any());
         List<DecryptedJournalEntryResponse> result = spyService.listRecentUserEntries();
 
         assertNotNull(result);
@@ -65,7 +67,8 @@ class JournalServiceTest {
 
     @Test
     void testViewJournalEntriesWhichReturnDecryptedResponse() throws Exception {
-        JournalGetResponse mockResponseList = new JournalGetResponse(1L, new EncryptedPayload("encrypted-title", "title-iv"),
+        UUID uuid = UUID.randomUUID();
+        JournalGetResponse mockResponseList = new JournalGetResponse(1L, uuid, new EncryptedPayload("encrypted-title", "title-iv"),
                 new EncryptedPayload("encrypted-content", "content-iv"),
                 null, List.of(new EncryptedPayload("encrypted-tag", "iv")),
                 LocalDateTime.now(), null, null, null);
@@ -78,7 +81,7 @@ class JournalServiceTest {
         when(httpResponse.body()).thenReturn(json);
 
         JournalService spyService = Mockito.spy(journalService);
-        doReturn("Decrypted Title").when(spyService).decryptContent(any());
+        doReturn("Decrypted Title").when(spyService).decryptContent(any(), any(), any());
         DecryptedJournalGetResponse result = spyService.viewEntry(1L);
 
         assertNotNull(result);
@@ -91,6 +94,7 @@ class JournalServiceTest {
         List<DecryptedJournalGetResponse> decryptedList = List.of(
                 new DecryptedJournalGetResponse(
                         1L,
+                        UUID.randomUUID(),
                         "Title 1",
                         "Some content here",
                         "Happy",
@@ -100,6 +104,7 @@ class JournalServiceTest {
                 ),
                 new DecryptedJournalGetResponse(
                         2L,
+                        UUID.randomUUID(),
                         "Title 2",
                         "Other content here",
                         "Sad",

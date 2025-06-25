@@ -2,7 +2,12 @@ package io.inkHeart.cli.crypto;
 
 import org.junit.jupiter.api.Test;
 import javax.crypto.SecretKey;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,13 +31,13 @@ class CryptoUtilsTest {
         SecretKey key = CryptoUtils.deriveKeyFromPassword(password);
         byte[] aad = "associatedData".getBytes();
 
-        CryptoUtils.EncryptionResult result = CryptoUtils.encrypt(plaintext, key, iv, aad);
+        CryptoUtils.EncryptionResult result = CryptoUtils.encrypt(plaintext, key, iv, ByteBuffer.wrap(aad));
         assertNotNull(result);
         assertNotNull(result.cipherText());
         assertNotNull(result.getCipherTextInBase64());
         assertNotNull(result.getIvInBase64());
 
-        String decrypted = CryptoUtils.decrypt(result.cipherText(), key, iv, aad);
+        String decrypted = CryptoUtils.decrypt(result.cipherText(), key, iv, ByteBuffer.wrap(aad));
         assertEquals(plaintext, decrypted);
     }
 
@@ -45,9 +50,9 @@ class CryptoUtilsTest {
         byte[] correctAAD = "correctAAD".getBytes();
         byte[] wrongAAD = "wrongAAD".getBytes();
 
-        CryptoUtils.EncryptionResult result = CryptoUtils.encrypt(plaintext, key, iv, correctAAD);
+        CryptoUtils.EncryptionResult result = CryptoUtils.encrypt(plaintext, key, iv, ByteBuffer.wrap(correctAAD));
         assertThrows(Exception.class, () -> {
-            CryptoUtils.decrypt(result.cipherText(), key, iv, wrongAAD);
+            CryptoUtils.decrypt(result.cipherText(), key, iv, ByteBuffer.wrap(wrongAAD));
         });
     }
 
@@ -72,6 +77,28 @@ class CryptoUtilsTest {
         SecretKey key1 = CryptoUtils.deriveKeyFromPassword(password);
         SecretKey key2 = CryptoUtils.deriveKeyFromPassword(password);
         assertArrayEquals(key1.getEncoded(), key2.getEncoded());
+    }
+    @Test
+    public void testPopulateAAD() {
+        UUID uuid = UUID.randomUUID();
+        String fieldName = "title";
+        ByteBuffer actual = CryptoUtils.populateAAD(uuid, fieldName);
+        byte[] fieldBytes = fieldName.getBytes(StandardCharsets.UTF_8);
+
+        ByteBuffer expected = ByteBuffer.allocate(16 + 1 + fieldBytes.length);
+        expected.put(uuidToBytes(uuid));
+        expected.put((byte) ':');
+        expected.put(fieldBytes);
+        expected.flip();
+
+        assertEquals(expected, actual);
+    }
+
+    private static byte[] uuidToBytes(UUID uuid) {
+        ByteBuffer bb = ByteBuffer.allocate(16);
+        bb.putLong(uuid.getMostSignificantBits());
+        bb.putLong(uuid.getLeastSignificantBits());
+        return bb.array();
     }
 
 }

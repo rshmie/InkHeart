@@ -1,10 +1,12 @@
 package io.inkHeart.cli.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record JournalEntryResponse(
         Long id,
+        UUID entryUUID,
         EncryptedPayload encryptedTitle,
-        LocalDateTime createdAt, // Essential: The client needs the server's official timestamp.
-        LocalDateTime updatedAt  // Essential for the same reason.
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {}

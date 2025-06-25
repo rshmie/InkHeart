@@ -21,6 +21,10 @@ import java.util.stream.Collectors;
 import static io.inkHeart.cli.CliApplication.JOURNAL_BASE_URl;
 
 public class JournalService {
+    public static final String TITLE = "title";
+    public static final String CONTENT = "content";
+    public static final String TAGS = "tags";
+    public static final String MOOD = "mood";
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMMM dd, yyyy 'at' hh:mm a");
     public static final DateTimeFormatter INPUT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     public static final DateTimeFormatter FALL_BACK_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -41,20 +45,21 @@ public class JournalService {
     public void createEntry() {
         CreateEntryPromptResult result = CLIMenu.getCreateEntryPromptResult(this.scanner);
         try {
-            EncryptedPayload encryptedTitle = result.title().isBlank() ? null : encryptField(result.title());
-            EncryptedPayload encryptedContent = result.content().isBlank() ? null: encryptField(result.content());
-            EncryptedPayload encryptedMood = result.mood().isBlank() ? null : encryptField(result.mood());
+            var entryUUID = UUID.randomUUID();
+            EncryptedPayload encryptedTitle = result.title().isBlank() ? null : encryptField(result.title(), entryUUID, TITLE);
+            EncryptedPayload encryptedContent = result.content().isBlank() ? null: encryptField(result.content(), entryUUID, CONTENT);
+            EncryptedPayload encryptedMood = result.mood().isBlank() ? null : encryptField(result.mood(), entryUUID, MOOD);
             List<EncryptedPayload> encryptedTags = result.tags().isEmpty() ? Collections.emptyList() : result.tags().stream()
-                    .map(this::encryptField)
+                    .map((x) -> encryptField(x, entryUUID, TAGS))
                     .toList();
             LocalDateTime visibleAfter = result.visibleAfterStr().isBlank()
-                    ? LocalDateTime.now()
+                    ? LocalDateTime.now().plusSeconds(1)
                     : LocalDateTime.parse(result.visibleAfterStr(), INPUT_DATE_TIME_FORMATTER);
             LocalDateTime expiresAt = result.expiresAtStr().isBlank()
                     ? null
                     : LocalDateTime.parse(result.expiresAtStr(), INPUT_DATE_TIME_FORMATTER);
 
-            CreateJournalEntryRequest request = new CreateJournalEntryRequest(encryptedTitle, encryptedContent, encryptedTags,
+            CreateJournalEntryRequest request = new CreateJournalEntryRequest(entryUUID, encryptedTitle, encryptedContent, encryptedTags,
                     encryptedMood, visibleAfter, expiresAt);
             try {
                 String requestJson = JsonUtil.getObjectMapper().writeValueAsString(request);
@@ -70,7 +75,7 @@ public class JournalService {
                 if (response.statusCode() == 201 || response.statusCode() == 200) {
                     System.out.println();
                     MessagePrinter.success("Entry saved!");
-                    String title =  decryptContent(journalEntryResponse.encryptedTitle());
+                    String title =  decryptContent(journalEntryResponse.encryptedTitle(), journalEntryResponse.entryUUID(), TITLE);
                     MessagePrinter.info("Your journal entry titled \"" + title + "\" was created on " + journalEntryResponse.createdAt().format(DATE_TIME_FORMATTER));
                 } else {
                     MessagePrinter.error(" Failed to save entry: " + response.body());
@@ -104,7 +109,7 @@ public class JournalService {
             List<DecryptedJournalEntryResponse> decryptedJournalEntryResponse = new ArrayList<>();
             for (JournalEntryResponse journalEntry: entriesWithinRange) {
                 decryptedJournalEntryResponse.add(new DecryptedJournalEntryResponse(journalEntry.id(),
-                        decryptContent(journalEntry.encryptedTitle()), journalEntry.createdAt(), journalEntry.updatedAt()));
+                        decryptContent(journalEntry.encryptedTitle(), journalEntry.entryUUID(), TITLE), journalEntry.createdAt(), journalEntry.updatedAt()));
             }
             return decryptedJournalEntryResponse;
         } catch (Exception ex) {
@@ -122,7 +127,7 @@ public class JournalService {
             List<DecryptedJournalEntryResponse> decryptedJournalEntryResponse = new ArrayList<>();
             for (JournalEntryResponse journalEntry: recentEntries) {
                 decryptedJournalEntryResponse.add(new DecryptedJournalEntryResponse(journalEntry.id(),
-                        decryptContent(journalEntry.encryptedTitle()), journalEntry.createdAt(), journalEntry.updatedAt()));
+                        decryptContent(journalEntry.encryptedTitle(), journalEntry.entryUUID(), TITLE), journalEntry.createdAt(), journalEntry.updatedAt()));
             }
             return decryptedJournalEntryResponse;
         } catch (Exception ex) {
@@ -172,9 +177,9 @@ public class JournalService {
            MessagePrinter.error("Unable to view journal entry!");
            return null;
         }
-        return new DecryptedJournalGetResponse(journalGetResponse.id(), decryptContent(journalGetResponse.encryptedTitle()),
-                decryptContent(journalGetResponse.encryptedContent()), decryptContent(journalGetResponse.encryptedMood()),
-                decryptTags(journalGetResponse.encryptedTags()), journalGetResponse.createdAt(),
+        return new DecryptedJournalGetResponse(journalGetResponse.id(), journalGetResponse.entryUUID(), decryptContent(journalGetResponse.encryptedTitle(), journalGetResponse.entryUUID(), TITLE),
+                decryptContent(journalGetResponse.encryptedContent(), journalGetResponse.entryUUID(), CONTENT), decryptContent(journalGetResponse.encryptedMood(), journalGetResponse.entryUUID(), MOOD),
+                decryptTags(journalGetResponse.encryptedTags(), journalGetResponse.entryUUID(), TAGS), journalGetResponse.createdAt(),
                 journalGetResponse.updatedAt(), journalGetResponse.visibleAfter(), journalGetResponse.expiresAt());
     }
 
@@ -203,7 +208,7 @@ public class JournalService {
             return null;
         }
         JournalEntryResponse journalDeleteResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
-        return new DecryptedJournalEntryResponse(journalDeleteResponse.id(), decryptContent(journalDeleteResponse.encryptedTitle()),
+        return new DecryptedJournalEntryResponse(journalDeleteResponse.id(), decryptContent(journalDeleteResponse.encryptedTitle(), journalDeleteResponse.entryUUID(), TITLE),
                 journalDeleteResponse.createdAt(), journalDeleteResponse.updatedAt());
     }
 
@@ -218,17 +223,18 @@ public class JournalService {
         CLIMenu.printJournalViewEntries(originalEntry);
 
         CreateEntryPromptResult editedEntry = CLIMenu.promptForEditingJournalEntry(id, this.scanner);
+        var entryUUD = originalEntry.entryUUID();
         EncryptedPayload encryptedTitle = editedEntry.title().isBlank() ? null :
-                (!editedEntry.title().equals(originalEntry.decryptedTitle()) ? encryptField(editedEntry.title()) : null);
+                (!editedEntry.title().equals(originalEntry.decryptedTitle()) ? encryptField(editedEntry.title(), entryUUD, TITLE) : null);
 
         EncryptedPayload encryptedContent = editedEntry.content().isBlank() ? null :
-                (!editedEntry.content().equals(originalEntry.decryptedContent()) ? encryptField(editedEntry.content()) : null);
+                (!editedEntry.content().equals(originalEntry.decryptedContent()) ? encryptField(editedEntry.content(), entryUUD, CONTENT) : null);
 
         EncryptedPayload encryptedMood = editedEntry.mood().isBlank() ? null :
-                (!editedEntry.mood().equals(originalEntry.decryptedMood()) ? encryptField(editedEntry.mood()) : null);
+                (!editedEntry.mood().equals(originalEntry.decryptedMood()) ? encryptField(editedEntry.mood(), entryUUD, MOOD) : null);
 
         List<EncryptedPayload> encryptedTags = editedEntry.tags().isEmpty() ? null :
-                (!editedEntry.tags().equals(originalEntry.decryptedTags()) ? editedEntry.tags().stream().map(this::encryptField).toList() : null);
+                (!editedEntry.tags().equals(originalEntry.decryptedTags()) ? editedEntry.tags().stream().map(x -> encryptField(x, entryUUD, TAGS)).toList() : null);
 
         LocalDateTime visibleAfter = editedEntry.visibleAfterStr().isBlank() ? null :
                 LocalDateTime.parse(editedEntry.visibleAfterStr(), INPUT_DATE_TIME_FORMATTER);
@@ -236,7 +242,7 @@ public class JournalService {
         LocalDateTime expiresAt = editedEntry.expiresAtStr().isBlank() ? null :
                 LocalDateTime.parse(editedEntry.expiresAtStr(), INPUT_DATE_TIME_FORMATTER);
 
-        UpdateJournalEntryRequest request = new UpdateJournalEntryRequest(encryptedTitle, encryptedContent,
+        UpdateJournalEntryRequest request = new UpdateJournalEntryRequest(entryUUD, encryptedTitle, encryptedContent,
                 encryptedMood, encryptedTags, visibleAfter, expiresAt);
         var editRequestJson = JsonUtil.getObjectMapper().writeValueAsString(request);
 
@@ -260,7 +266,7 @@ public class JournalService {
             return null;
         }
         JournalEntryResponse journalEditResponse = JsonUtil.getObjectMapper().readValue(response.body(), JournalEntryResponse.class);
-        return new DecryptedJournalEntryResponse(journalEditResponse.id(), decryptContent(journalEditResponse.encryptedTitle()),
+        return new DecryptedJournalEntryResponse(journalEditResponse.id(), decryptContent(journalEditResponse.encryptedTitle(), journalEditResponse.entryUUID(), TITLE),
                 journalEditResponse.createdAt(), journalEditResponse.updatedAt());
     }
 
@@ -322,46 +328,47 @@ public class JournalService {
         List<JournalGetResponse> responseList = JsonUtil.getObjectMapper().readValue(response.body(), new TypeReference<List<JournalGetResponse>>(){});
         List<DecryptedJournalGetResponse> decryptedJournalGetResponseList = new ArrayList<>();
         for (JournalGetResponse journalGetResponse: responseList) {
-            decryptedJournalGetResponseList.add(new DecryptedJournalGetResponse(journalGetResponse.id(), decryptContent(journalGetResponse.encryptedTitle()),
-                    decryptContent(journalGetResponse.encryptedContent()), decryptContent(journalGetResponse.encryptedMood()),
-                    decryptTags(journalGetResponse.encryptedTags()), journalGetResponse.createdAt(),
+            decryptedJournalGetResponseList.add(new DecryptedJournalGetResponse(journalGetResponse.id(), journalGetResponse.entryUUID(), decryptContent(journalGetResponse.encryptedTitle(), journalGetResponse.entryUUID(), TITLE),
+                    decryptContent(journalGetResponse.encryptedContent(), journalGetResponse.entryUUID(), CONTENT), decryptContent(journalGetResponse.encryptedMood(), journalGetResponse.entryUUID(), MOOD),
+                    decryptTags(journalGetResponse.encryptedTags(), journalGetResponse.entryUUID(), TAGS), journalGetResponse.createdAt(),
                     journalGetResponse.updatedAt(), journalGetResponse.visibleAfter(), journalGetResponse.expiresAt()));
         }
 
         return decryptedJournalGetResponseList;
     }
 
-    private EncryptedPayload encryptField(String input) {
+    private EncryptedPayload encryptField(String input, UUID entryUuid, String fieldName) {
         try {
             byte[] iv = CryptoUtils.generateIV();
-            var result = CryptoUtils.encrypt(input, encryptionKey, iv, null);
+            var result = CryptoUtils.encrypt(input, encryptionKey, iv, CryptoUtils.populateAAD(entryUuid, fieldName));
             return new EncryptedPayload(
                     result.getCipherTextInBase64(),
                     result.getIvInBase64()
             );
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException("Encryption failed : " + e.getMessage());
         }
     }
 
-    String decryptContent(EncryptedPayload encryptedPayload) {
+    String decryptContent(EncryptedPayload encryptedPayload, UUID entryUUID, String fieldName) {
         if (checkNull(encryptedPayload) == null) {
             return null;
         }
         try {
             return CryptoUtils.decrypt(CryptoUtils.base64EncodedToBytes(encryptedPayload.cipherText()),
                     this.encryptionKey,
-                    CryptoUtils.base64EncodedToBytes(encryptedPayload.iv()), null);
+                    CryptoUtils.base64EncodedToBytes(encryptedPayload.iv()), CryptoUtils.populateAAD(entryUUID, fieldName));
         } catch (Exception e) {
             throw new RuntimeException("Content decryption failed: " + e.getMessage());
         }
     }
 
-    private List<String> decryptTags(List<EncryptedPayload> tags) {
+    private List<String> decryptTags(List<EncryptedPayload> tags, UUID entryUUID, String fieldName) {
         if (tags.isEmpty()) {
             return Collections.emptyList();
         }
-        return tags.stream().map(this::decryptContent).collect(Collectors.toList());
+        return tags.stream().map(x -> decryptContent(x, entryUUID, fieldName)).collect(Collectors.toList());
     }
 
     private EncryptedPayload checkNull(EncryptedPayload encryptedPayload) {

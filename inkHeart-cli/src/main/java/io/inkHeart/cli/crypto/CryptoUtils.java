@@ -3,13 +3,14 @@ package io.inkHeart.cli.crypto;
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
 import org.bouncycastle.crypto.params.Argon2Parameters;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.UUID;
 
 import static io.inkHeart.cli.crypto.CryptoConstants.*;
 
@@ -20,12 +21,12 @@ import static io.inkHeart.cli.crypto.CryptoConstants.*;
 public class CryptoUtils {
     public static byte[] generateIV() {
         byte[] iv = new byte[IV_SIZE];
-        SecureRandom secureRandom = new SecureRandom();
+        SecureRandom secureRandom = CryptoConstants.secureRandom;
         secureRandom.nextBytes(iv);
         return iv;
     }
 
-    public static EncryptionResult encrypt(String plainText, SecretKey key, byte[] iv, byte[] aad) throws Exception {
+    public static EncryptionResult encrypt(String plainText, SecretKey key, byte[] iv, ByteBuffer aad) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
         cipher.init(Cipher.ENCRYPT_MODE, key, spec);
@@ -36,7 +37,7 @@ public class CryptoUtils {
         return new EncryptionResult(cipherText, iv, aad);
     }
 
-    public static String decrypt(byte[] cipherText, SecretKey key, byte[] iv, byte[] aad) throws Exception {
+    public static String decrypt(byte[] cipherText, SecretKey key, byte[] iv, ByteBuffer aad) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
         cipher.init(Cipher.DECRYPT_MODE, key, spec);
@@ -60,6 +61,27 @@ public class CryptoUtils {
         return new SecretKeySpec(keyBytes, "AES");
     }
 
+    /**
+     * AAD = concatenate(Entry_UUID, Field_Name) separated by ':'
+     * @param entryUUID Journal Entry ID
+     * @param fieldName  Journal Entry field name
+     * @return AAD
+     */
+    public static ByteBuffer populateAAD(UUID entryUUID, String fieldName) {
+        ByteBuffer uuidBuffer = ByteBuffer.allocate(Long.BYTES * 2);
+        uuidBuffer.putLong(entryUUID.getMostSignificantBits());
+        uuidBuffer.putLong(entryUUID.getLeastSignificantBits());
+        byte[] uuidBytes = uuidBuffer.array();
+
+        ByteBuffer aadBuffer = ByteBuffer.allocate(uuidBytes.length + 1 + fieldName.length());
+        aadBuffer.put(uuidBytes);
+        aadBuffer.put((byte) ':');
+        aadBuffer.put(fieldName.getBytes(StandardCharsets.UTF_8));
+
+        aadBuffer.flip();
+        return aadBuffer;
+    }
+
     public static byte[] base64EncodedToBytes(String input) {
         return Base64.getDecoder().decode(input);
     }
@@ -72,13 +94,17 @@ public class CryptoUtils {
         return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
     }
 
-    public record EncryptionResult(byte[] cipherText, byte[] iv, byte[] aad) {
+    public record EncryptionResult(byte[] cipherText, byte[] iv, ByteBuffer aad) {
         public String getCipherTextInBase64() {
             return Base64.getEncoder().encodeToString(cipherText);
         }
 
         public String getIvInBase64() {
             return Base64.getEncoder().encodeToString(iv);
+        }
+
+        public ByteBuffer getAAD() {
+            return aad;
         }
     }
 }

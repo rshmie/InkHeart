@@ -4,6 +4,7 @@ import jakarta.validation.constraints.FutureOrPresent;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * DTO which handles the viewing complete journal entry in
@@ -11,6 +12,7 @@ import java.util.List;
  */
 public record DecryptedJournalGetResponse (
     Long id,
+    UUID entryUUID,
     String decryptedTitle,
     String decryptedContent,
     String decryptedMood,
