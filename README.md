@@ -99,6 +99,11 @@ Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated E
     ```
     This command will compile the code, run tests, and package the application into executable JAR files located in the `inkHeart-backend/target` and `inkHeart-cli/target` directories.
 
+    <br/>**JWT Secret Handling**: 
+    During the build, `jwt.properties` file containing a securely auto-generated JWT secret will be created in the `inkHeart-backend` directory if it does not already exist.  
+    This file is excluded from version control (`.gitignore`) and is used internally by the backend for JWT authentication. This mechanism eliminates the need for manual secret setup, 
+    especially in environments without a dedicated secret manager.
+
 **Running the Application:**
 
 First, start the backend server, and then run the CLI to interact with it.
