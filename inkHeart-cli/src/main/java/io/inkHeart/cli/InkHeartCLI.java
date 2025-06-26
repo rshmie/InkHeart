@@ -17,8 +17,8 @@ public class InkHeartCLI implements Runnable {
 
     @Override
     public void run() {
-        // This is the entry point when no subcommands are specified.
-        // We will now make it interactive.
+        // This is the entry point when no subcommands are specified, it's an interactive session
+        MessagePrinter.printAsciiBanner();
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.println();

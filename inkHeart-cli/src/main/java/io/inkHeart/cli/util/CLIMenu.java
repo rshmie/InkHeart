@@ -10,24 +10,26 @@ import java.util.Scanner;
 
 import static io.inkHeart.cli.service.JournalService.DATE_TIME_FORMATTER;
 import static io.inkHeart.cli.service.JournalService.INPUT_DATE_TIME_FORMATTER;
+import static io.inkHeart.cli.util.MessagePrinter.center;
 
 public class CLIMenu {
     public static void printWelcomeMenu() {
         // Clear screen for a cleaner look (optional, might not work on all terminals)
         // System.out.print("\033[H\033[2J");
         System.out.flush();
-        //🌿
         System.out.println();
         MessagePrinter.divider();
-        MessagePrinter.title("                            Welcome to InkHeart CLI");
+        MessagePrinter.title(center("Welcome to InkHeart CLI", 81));
         MessagePrinter.divider();
         System.out.println();
         System.out.println("A secure, encrypted journal where your thoughts stay truly yours.");
         System.out.println();
-        MessagePrinter.showOption("[1]", "Register a new account"); // cyan bold or cyan?
+        MessagePrinter.showOption("[1]", "Register a new account");
         MessagePrinter.showOption("[2]", "Log in to your existing account");
         MessagePrinter.showOption("[3]", "Exit");
+        System.out.println();
         MessagePrinter.divider();
+        System.out.println();
         MessagePrinter.prompt("Enter your choice:");
 
     }
@@ -41,7 +43,8 @@ public class CLIMenu {
         MessagePrinter.showOption("[2]", "My Journal");
         MessagePrinter.showOption("[3]", "Logout");
         MessagePrinter.divider();
-        MessagePrinter.prompt("Select an action [1-3]: "); // Choose an option from above:
+        System.out.println();
+        MessagePrinter.prompt("Select an action [1-3]: ");
     }
 
     public static void showMyJournalMenu() {
@@ -51,6 +54,7 @@ public class CLIMenu {
         System.out.println(" Find an entry to view, edit, or delete.");
         System.out.println("Choose how you'd like to find it: ");
         MessagePrinter.divider();
+        System.out.println();
         MessagePrinter.showOption("[1]", "List Recent Entries\n  -> Shows the 10 most recent entry titles.\n");
         MessagePrinter.showOption("[2]", "Filter by Date Range\n  -> Finds all entries between two specific dates.\n");
         MessagePrinter.showOption("[3]", "Full-Text Search\n  -> Search for a word, mood or tag across your entire journal.\n");
@@ -155,4 +159,5 @@ public class CLIMenu {
         MessagePrinter.formatPair("ID", ": ", String.valueOf(id));
         return getCreateEntryPromptResult(scanner);
     }
+
 }

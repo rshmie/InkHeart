@@ -1,6 +1,5 @@
 package io.inkHeart.cli.util;
 
-import org.jline.jansi.Ansi;
 import picocli.CommandLine;
 
 public class MessagePrinter {
@@ -33,8 +32,6 @@ public class MessagePrinter {
     }
 
     public static void divider() {
-//        System.out.println(CommandLine.Help.Ansi.AUTO.string("@|blue ------------------------------------" +
-//                "--------------------------------------------|@"));
         System.out.println(CommandLine.Help.Ansi.AUTO.string(
                 "@|fg(blue),italic ---------------------------------------------------------------------------------|@"));
     }
@@ -51,5 +48,25 @@ public class MessagePrinter {
         System.out.println(CommandLine.Help.Ansi.AUTO.string("@|yellow WARNING: " + message + "|@"));
     }
 
+    public static void printAsciiBanner() {
+        System.out.println(CommandLine.Help.Ansi.AUTO.string(
+                """
+                        @|bold,green\s
+                          _____       _    _    _                 _  \s
+                         |_   _|     | |  | |  | |               | | \s
+                           | |  _ __ | | _| |__| | ___  __ _ _ __| |_\s
+                           | | | '_ \\| |/ /  __  |/ _ \\/ _` | '__| __|
+                          _| |_| | | |   <| |  | |  __/ (_| | |  | |_\s
+                         |_____|_| |_|_|\\_\\_|  |_|\\___|\\__,_|_|   \\__|
+                                                                     \s
+                        |@"""
+        ));
+    }
+
+    static String center(String message, int width) {
+        int padding = (width - message.length()) / 2;
+        if (padding <= 0) return message;
+        return " ".repeat(padding) + message;
+    }
 
 }
