@@ -1,11 +1,6 @@
 server:
   port: 8080
 
-#jwt:
-#  secret: "JPBXkgSltOTzTiOGLoxvJUS9qbg8Lj7MGcOdvU4hclg="
-jwt:
-  secret: ${JWT_SECRET}
-
 spring:
   datasource:
     url: jdbc:h2:mem:testdb
