@@ -5,7 +5,7 @@ target/
 !**/src/test/**/target/
 *.log
 *.pidjps
-.env
+jwt.properties
 
 ### STS ###
 .apt_generated

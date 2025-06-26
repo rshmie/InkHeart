@@ -1,8 +1,10 @@
 server:
   port: 8080
 
+#jwt:
+#  secret: "JPBXkgSltOTzTiOGLoxvJUS9qbg8Lj7MGcOdvU4hclg="
 jwt:
-  secret: "JPBXkgSltOTzTiOGLoxvJUS9qbg8Lj7MGcOdvU4hclg="
+  secret: ${JWT_SECRET}
 
 spring:
   datasource:
