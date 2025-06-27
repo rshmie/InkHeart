@@ -90,10 +90,17 @@ Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated E
     https://github.com/rshmie/InkHeart.git
     ```
 2.  Navigate to the project directory:
-    ```sh
-    cd inkHeart-main
-    ```
-    
+    * If you cloned the repo:
+      ```sh
+       cd inkHeart
+      ```
+      
+    * If you downloaded the ZIP and extracted it:
+      ```sh
+       cd InkHeart-main
+      ```
+    Make sure you're in the root directory before building or running the project/script.
+
 **Build and Run (Automated):**
 
 A convenient helper script is provided to automate the entire build and launch process.
