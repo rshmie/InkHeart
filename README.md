@@ -91,53 +91,70 @@ Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated E
     ```
 2.  Navigate to the project directory:
     ```sh
-    cd inkheart
+    cd inkHeart-main
     ```
-3.  Build the project:
+    
+**Build and Run (Automated):**
+
+A convenient helper script is provided to automate the entire build and launch process.
+
+1. Execute the starter script:
+   ```sh
+      ./start-inkHeart.sh
+   ```
+   This script will perform the following actions:
+   - Build the entire project.
+   - Start the Spring Boot backend server in the background.
+   - Launch the interactive Command-Line Interface (CLI).
+   - Prompt you to shut down the backend server after your CLI session ends.
+
+
+2. Stopping the Server:
+   If you need to manually stop the backend server, use the provided script:
+   ```sh
+      ./stop-backend.sh
+   ```
+
+*Note: These scripts assume a Unix-like shell (macOS/Linux/Git Bash on Windows).
+If you're on Windows and using CMD or PowerShell, consider using WSL or Git Bash.*
+
+**Optional: Manual Build and Run**
+
+If you prefer to build and run the application components separately, follow the steps below.
+
+1. Build the project:
     ```sh
     ./mvnw clean install
     ```
-    This command will compile the code, run tests, and package the application into executable JAR files located in the `inkHeart-backend/target` and `inkHeart-cli/target` directories.
+   This command compiles the source code, runs tests, and packages the application into executable JAR files, which will be located in the `inkHeart-backend/target` and `inkHeart-cli/target` directories.
 
-    <br/>**JWT Secret Handling**: 
-    During the build, `jwt.properties` file containing a securely auto-generated JWT secret will be created in the `inkHeart-backend` directory if it does not already exist.  
-    This file is excluded from version control (`.gitignore`) and is used internally by the backend for JWT authentication. This mechanism eliminates the need for manual secret setup, 
-    especially in environments without a dedicated secret manager.
+    <br/>**JWT Secret Handling**:
+   During the build process, a `jwt.properties` file is automatically generated under the `inkHeart-backend` directory if one does not already exist. 
+   This file contains a secure JWT secret and is used internally by the backend for authentication.
+   To enhance security, this file is explicitly excluded from version control (via `.gitignore`), eliminating the need for manual secret configuration, especially in environments without a dedicated secret manager.
 
-**Running the Application:**
 
-First, start the backend server, and then run the CLI to interact with it.
+2. Running the Application: 
 
-1.  **Start the Backend Server**
-    In a terminal, run the following command from the project root:
-    ```sh
-    java -jar inkHeart-backend/target/inkheart-*.jar
-    ```
-    The backend server will start on port 8080 by default.
+   The application consists of two main components - the backend server and the CLI client. You'll need to run them in separate terminal windows.
+   
+   * Start the Backend Server:
+      
+      Go to `inkHeart-backend` directory from the project root.
+      In a terminal, run the following command from the current directory.
+      ```sh
+       java -jar target/inkHeart-*.jar
+      ```
+      The backend server will start on port 8080 by default. 
+   
+   * Run the CLI Client:
+      
+      Open a *new* terminal window. From the project root, go to `inkHeart-cli` directory and start the command-line interface
+      ```sh
+         java -jar target/inkHeart-cli-*.jar
+      ```
+      The interactive CLI session will start.
 
-2.  **Run the CLI Client**
-    Open a *new* terminal window. From the project root, start the command-line interface:
-    ```sh
-    java -jar inkHeart-cli/target/inkheart-cli-*.jar
-    ```
-    The interactive CLI session will start.
-
-**Optional: Using the Startup Script**
-
-A helper script is provided to automate the build and launch process.
-```sh
-./start-inkHeart.sh
-```
-This script will:
-- Build the entire project
-- Start the Spring Boot backend in the background
-- Launch the CLI for interaction
-- Prompt you whether to shut down the backend after the CLI session ends
-
-To manually stop the backend server use this script `./stop-backend.sh`
-
-*Note:  These scripts assume a Unix-like shell (macOS/Linux/Git Bash on Windows).
-If you're on Windows and using CMD or PowerShell, consider using WSL or Git Bash.*
 
 ## Roadmap
 
