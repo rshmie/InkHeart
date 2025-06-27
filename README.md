@@ -87,7 +87,7 @@ Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated E
 **Installation & Build:**
 1.  Clone the repository: (or download the zip)
     ```sh
-    git clone [https://github.com/your-username/inkheart.git](https://github.com/your-username/inkheart.git)
+    https://github.com/rshmie/InkHeart.git
     ```
 2.  Navigate to the project directory:
     ```sh
