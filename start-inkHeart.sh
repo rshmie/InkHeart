@@ -1,25 +1,38 @@
 #!/bin/bash
 
-echo "### Building the InkHeart Project with the Maven Wrapper..."
-chmod +x ./mvnw
-./mvnw clean install
+ONLY_CLI=false
 
-if [ $? -ne 0 ]; then
-  echo "### Build failed."
+# Parse flag
+if [[ "$1" == "--only-cli" ]]; then
+  ONLY_CLI=true
+elif [[ -n "$1" ]]; then
+  echo "Unknown option: $1"
+  echo "Usage: ./start-inkHeart.sh [--only-cli]"
   exit 1
 fi
 
-echo "### Starting Spring Boot backend."
-nohup java -jar inkHeart-backend/target/inkHeart-backend-*.jar \
-  --spring.config.location=inkHeart-backend/jwt.properties \
-  > backend.log 2>&1 < /dev/null &
+if ! $ONLY_CLI; then
+  echo "### Building the InkHeart Project with the Maven Wrapper..."
+  chmod +x ./mvnw
+  ./mvnw clean install
 
-echo $! > .backend.pid
-BACKEND_PID=$!
-echo $BACKEND_PID > .backend.pidjps
+  if [ $? -ne 0 ]; then
+    echo "### Build failed."
+    exit 1
+  fi
 
-echo "### Backend started with PID $BACKEND_PID"
-sleep 10
+  echo "### Starting Spring Boot backend."
+  nohup java -jar inkHeart-backend/target/inkHeart-backend-*.jar \
+    --spring.config.location=inkHeart-backend/jwt.properties \
+    > backend.log 2>&1 < /dev/null &
+
+  BACKEND_PID=$!
+  echo $BACKEND_PID > .backend.pid
+  echo $BACKEND_PID > .backend.pidjps
+
+  echo "### Backend started with PID $BACKEND_PID"
+  sleep 10
+fi
 
 echo "### Starting InkHeart CLI..."
 java -jar inkHeart-cli/target/inkHeart-cli.jar

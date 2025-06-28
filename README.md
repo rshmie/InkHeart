@@ -105,7 +105,8 @@ Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated E
 
 A convenient helper script is provided to automate the entire build and launch process.
 
-1. Execute the starter script:
+1. Start the Application:
+   Run the starter script from the project root
    ```sh
       ./start-inkHeart.sh
    ```
@@ -115,6 +116,11 @@ A convenient helper script is provided to automate the entire build and launch p
    - Launch the interactive Command-Line Interface (CLI).
    - Prompt you to shut down the backend server after your CLI session ends.
 
+    <br/>To run only the CLI (assuming the backend is already running):
+    ``` sh
+       ./start-inkHeart.sh --only-cli
+    ```
+      
 
 2. Stopping the Server:
    If you need to manually stop the backend server, use the provided script:
