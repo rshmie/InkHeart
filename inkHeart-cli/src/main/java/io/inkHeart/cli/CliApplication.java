@@ -9,7 +9,7 @@ public class CliApplication {
 
     public static void main(String[] args) {
         AnsiConsole.systemInstall();
-        int exitCode = new CommandLine(new InkHeartCLI()).execute(args);
+        int exitCode = new CommandLine(new InkHeartCli()).execute(args);
         AnsiConsole.systemUninstall();
         System.exit(exitCode);
     }

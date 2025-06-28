@@ -5,7 +5,6 @@ import io.inkHeart.cli.commad.RegisterCommand;
 import io.inkHeart.cli.util.CLIMenu;
 import io.inkHeart.cli.util.MessagePrinter;
 import picocli.CommandLine;
-import picocli.CommandLine.Help.Ansi;
 
 import java.util.Scanner;
 
@@ -13,7 +12,7 @@ import java.util.Scanner;
         mixinStandardHelpOptions = true,
         version = "InkHeart CLI 1.0",
         description = "A secure, encrypted journal - Privacy-first, empathetic digital journal where your deepest thoughts stay truly just yours.")
-public class InkHeartCLI implements Runnable {
+public class InkHeartCli implements Runnable {
 
     @Override
     public void run() {
