@@ -2,8 +2,8 @@
 
 A secure, private, zero-knowledge journal application.
 
-InkHeart is a journaling application built for those who value absolute privacy. It leverages a zero-knowledge architecture, meaning your data is encrypted on your device *before* it's ever stored on our servers. Even service providers have no way to access, read, or decrypt your entries.
-Your journal remains yours and yours alone.
+InkHeart is a journaling application built for those who value absolute privacy. It leverages a zero-knowledge architecture, meaning your data is encrypted on your device *before* it's sent to the backend. 
+This zero-knowledge architecture ensures that even the service provider hosting the data has no way to access, read, or decrypt your entries. Your journal remains yours and yours alone.
 
 ## Why InkHeart?
 
@@ -29,13 +29,14 @@ By using the zero-knowledge principle with end-to-end encryption and client-side
 ## The Core Principle: Zero Knowledge
 
 In a world where data is a commodity, InkHeart gives you a private space that's truly yours. 
-The Promise is simple:
+The motive is simple:
 
 > **We know nothing about you or your data.**
 
 * **No one can see your data.** Your entries, tags, and even moods are encrypted client-side using a key derived from your master password.
 * **No one knows your password.** Authentication is handled using SRP (Secure Remote Password), a protocol that verifies your identity without your password ever leaving your device.
-* **Data loss is the trade-off for privacy.** Because we can't recover your password, we also can't recover your data if you lose it. This is the ultimate proof of our zero-knowledge commitment. (A secure, user-controlled recovery mechanism is planned for a future release).
+* **Data loss is the trade-off for privacy.** Because we have no knowledge of your password, we cannot recover it. This is the trade-off for absolute privacy - if you lose your password, 
+your data cannot be recovered. This limitation is the ultimate proof of zero-knowledge commitment. (A secure, user-controlled recovery mechanism is planned for a future release)
 
 ## Features
 
@@ -87,7 +88,7 @@ Journal entries and metadata are encrypted using AES-256-GCM, an Authenticated E
 **Installation & Build:**
 1.  Clone the repository: (or download the zip)
     ```sh
-    https://github.com/rshmie/InkHeart.git
+    git clone https://github.com/rshmie/InkHeart.git
     ```
 2.  Navigate to the project directory:
     * If you cloned the repo:
@@ -133,40 +134,35 @@ If you're on Windows and using CMD or PowerShell, consider using WSL or Git Bash
 
 **Optional: Manual Build and Run**
 
-If you prefer to build and run the application components separately, follow the steps below.
+If you prefer to run the components separately, you can do so from the project's root directory.
 
-1. Build the project:
+1.  **Build the Project:**
+    First, build both the backend and CLI modules.
     ```sh
     ./mvnw clean install
     ```
-   This command compiles the source code, runs tests, and packages the application into executable JAR files, which will be located in the `inkHeart-backend/target` and `inkHeart-cli/target` directories.
+    This command compiles the source code, runs tests, and packages the application into executable JAR files.
 
     <br/>**JWT Secret Handling**:
-   During the build process, a `jwt.properties` file is automatically generated under the `inkHeart-backend` directory if one does not already exist. 
-   This file contains a secure JWT secret and is used internally by the backend for authentication.
-   To enhance security, this file is explicitly excluded from version control (via `.gitignore`), eliminating the need for manual secret configuration, especially in environments without a dedicated secret manager.
+    During the build process, a `jwt.properties` file is automatically generated under the `inkHeart-backend` directory if one does not already exist.
+    This file contains a secure JWT secret and is used internally by the backend for authentication.
+    To enhance security, this file is explicitly excluded from version control (via `.gitignore`), eliminating the need for manual secret configuration, especially in environments without a dedicated secret manager.
 
 
-2. Running the Application: 
+2.  **Run the Application (in separate terminals):**
+    You will need two separate terminal windows, both at the project's root.
 
-   The application consists of two main components - the backend server and the CLI client. You'll need to run them in separate terminal windows.
-   
-   * Start the Backend Server:
-      
-      Go to `inkHeart-backend` directory from the project root.
-      In a terminal, run the following command from the current directory.
-      ```sh
-       java -jar target/inkHeart-*.jar
-      ```
-      The backend server will start on port 8080 by default. 
-   
-   * Run the CLI Client:
-      
-      Open a *new* terminal window. From the project root, go to `inkHeart-cli` directory and start the command-line interface
-      ```sh
-         java -jar target/inkHeart-cli-*.jar
-      ```
-      The interactive CLI session will start.
+    * **Terminal 1: Start the Backend Server**
+      Run the following command to start the server. It will launch on port 8080 by default.
+        ```sh
+        java -jar inkHeart-backend/target/inkHeart-*.jar
+        ```
+
+    * **Terminal 2: Run the CLI Client**
+      In your second terminal, run this command to start the interactive command-line interface.
+        ```sh
+        java -jar inkHeart-cli/target/inkHeart-cli-*.jar
+        ```
 
 
 ## Roadmap
