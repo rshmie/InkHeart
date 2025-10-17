@@ -2,8 +2,15 @@
 
 Your private journal, encrypted on your device and unreadable by anyone but you.
 
-InkHeart is a journaling application built for those who value absolute privacy. It leverages a zero-knowledge architecture, meaning your data is encrypted on your device *before* it's sent to the backend. 
+InkHeart is a journaling application built for those who value absolute privacy. It leverages a zero-knowledge architecture, meaning your data is encrypted on your device *before* it's sent to the backend.
 This zero-knowledge architecture ensures that even the service provider hosting the data has no way to access, read, or decrypt your entries. Your journal remains yours and yours alone.
+
+> ### 📍 Current State: Architectural Demo
+>
+> This project is a fully functional proof-of-concept demonstrating the zero-knowledge architecture and end-to-end encryption. The backend currently uses an **in-memory H2 database**, meaning **all data will be cleared when the server is shut down**.
+>
+> Persistent storage is my high-priority item on the project [Roadmap](#roadmap).
+>
 
 ## Why InkHeart?
 
@@ -20,6 +27,7 @@ By using the zero-knowledge principle with end-to-end encryption and client-side
 
 * **Language:** Java 17
 * **Framework:** Spring Boot 3
+* **Database:** H2 (In-Memory Mode)
 * **Security:** Spring Security
     * **Cryptographic Primitives:** Bouncy Castle
     * **SRP6a Implementation:** NimbusDS
