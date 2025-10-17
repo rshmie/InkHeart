@@ -1,13 +1,13 @@
 # 🌿 InkHeart 🖋️
 
-A secure, private, zero-knowledge journal application.
+Your private journal, encrypted on your device and unreadable by anyone but you.
 
 InkHeart is a journaling application built for those who value absolute privacy. It leverages a zero-knowledge architecture, meaning your data is encrypted on your device *before* it's sent to the backend. 
 This zero-knowledge architecture ensures that even the service provider hosting the data has no way to access, read, or decrypt your entries. Your journal remains yours and yours alone.
 
 ## Why InkHeart?
 
-Most journaling apps today rely on centralized cloud storage, leaving your personal data vulnerable to breaches and misuse. InkHeart was built for users who demand complete control over their data and privacy.
+Most journaling apps today rely on centralized cloud storage, leaving your personal data vulnerable to breaches, misuse and legal obligations. InkHeart is built for users who demand complete control over their data and privacy.
 
 It's ideal for:
 -   Personal journaling with absolute privacy.
@@ -28,15 +28,25 @@ By using the zero-knowledge principle with end-to-end encryption and client-side
 
 ## The Core Principle: Zero Knowledge
 
-In a world where data is a commodity, InkHeart gives you a private space that's truly yours. 
-The motive is simple:
+In a world where data is a commodity, InkHeart gives you a private space that's truly yours. It leverages **zero-knowledge architecture**, a paradigm where 
+the server cannot access user data even if it wants to. This is not merely an implementation detail but a fundamental architectural principle.
 
-> **We know nothing about you or your data.**
+**What Zero-Knowledge Means in Practice**:
 
-* **No one can see your data.** Your entries, tags, and even moods are encrypted client-side using a key derived from your master password.
-* **No one knows your password.** Authentication is handled using SRP (Secure Remote Password), a protocol that verifies your identity without your password ever leaving your device.
-* **Data loss is the trade-off for privacy.** Because we have no knowledge of your password, we cannot recover it. This is the trade-off for absolute privacy - if you lose your password, 
-your data cannot be recovered. This limitation is the ultimate proof of zero-knowledge commitment. (A secure, user-controlled recovery mechanism is planned for a future release)
+The term "zero-knowledge" originates from cryptographic proof systems where one party (the prover) can prove to another party (the verifier) that they 
+know a value without revealing the value itself. InkHeart extends this concept to data storage and authentication:
+
+1. **Data Encryption Without Server Keys**: All journal entries are encrypted on the client device before transmission. The encryption key is derived from 
+  the user's password using a memory-hard key derivation function (Argon2id). This key never leaves the client device, never travels over the network (even encrypted), 
+  and is never stored anywhere except in volatile memory during the user's session. The server receives only ciphertext, which is computationally infeasible to decrypt without the key.
+
+2. **Authentication Without Password Transmission**: Traditional authentication systems require users to send their password to the server, which then 
+ verifies it against a stored hash. This creates a window of vulnerability where the server sees the plaintext or hashed password. InkHeart uses the Secure Remote Password (SRP) protocol, 
+ a Password-Authenticated Key Exchange (PAKE) mechanism that allows the server to verify the user without password ever leaving the client device.
+
+3. **Irrecoverable by Design**: If a user forgets their password, their data cannot be recovered. This is not a limitation but a feature that proves the 
+ zero-knowledge guarantee. If data were recoverable, it would mean the service provider retained some mechanism to decrypt user data, violating the zero-knowledge 
+ principle. This trade-off explicitly prioritizes privacy over convenience.
 
 ## Features
 
@@ -114,7 +124,7 @@ A convenient helper script is provided to automate the entire build and launch p
    This script will perform the following actions:
    - Build the entire project.
    - Start the Spring Boot backend server in the background.
-   - Launch the interactive Command-Line Interface (CLI).
+   - Launch the interactive Command-Line Interface (CLI) where you can register a new account or log in.
    - Prompt you to shut down the backend server after your CLI session ends.
 
     <br/>To run only the CLI (assuming the backend is already running):
